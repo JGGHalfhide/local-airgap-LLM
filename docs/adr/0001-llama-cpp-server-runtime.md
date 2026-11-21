@@ -33,7 +33,13 @@ otherwise stays resident alongside the CPU-repacked copy of the weights.
 
 Use `llama-server` from llama.cpp, pinned to release v1.0.0 (commit
 `b1b770d90d94cad9e9ea5b993bdbc383a522fb28`), built for CPU only. Run it with
-`--jinja`, `--load-mode none`, weight repacking on, and a thread count set
-from the in-VM benchmark (8 on the bare host). The runtime image goes
-through platform-lab's `make image` flow (SBOM, Trivy gate, cosign) in
-Week 2.
+`--jinja`, `--load-mode none`, weight repacking on, `--threads 6
+--threads-batch 8` (from the in-cluster benchmark on the 8-vCPU build VM:
+6 threads is best for generation, 8 for prompt processing).
+
+The runtime image is the project's own CPU image,
+`ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d`
+(`sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375`),
+published through platform-lab's `make image` (SBOM, Trivy gate, cosign).
+It selects the CPU backend at runtime (`zen4` on this host) and runs as a
+non-root UID set in the pod.

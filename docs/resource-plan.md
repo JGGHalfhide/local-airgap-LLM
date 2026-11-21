@@ -23,6 +23,9 @@ Planned pod sizing: `-c 32768`, 4 slots sharing the KV cache, memory
 request 5 GiB, limit 6 GiB. CPU: generation speed is limited by memory
 bandwidth (4 threads is within 3% of 8), prompt processing scales with
 cores (about 1.8x from 4 to 8 threads); 16 threads is no faster than 8.
+Inside the 8-vCPU VM, with the platform's pods taking about 1.3 cores,
+6 threads is best for generation and 8 for prompt processing
+(benchmarks/README.md), so the pod runs `-t 6 -tb 8` and requests 6 CPUs.
 
 Disk per cluster for the model: about 2.8 GiB in the registry (Zot or the
 Zarf registry) plus about 2.8 GiB in the node's containerd store or volume.

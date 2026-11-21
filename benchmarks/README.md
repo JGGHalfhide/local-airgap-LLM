@@ -69,7 +69,29 @@ Qwen3.5 uses few full-attention layers, so 32k context adds only about
 - Qwen3.5 4B keeps about 90% of its speed at 4k context; the others keep
   60-70%.
 
-## Still to run
+## Inside build-node-01, as a Kubernetes Job, 11/21
 
-- The same benchmark inside build-node-01 (VM overhead, thread count for
-  the pod).
+`benchmarks/k8s/llama-bench-job.yaml`: Qwen3.5 4B Q4_K_M, the upstream
+llama.cpp server image (`server-v1.0.0-b12359-b1b770d`, same commit as the
+host build) published and signed through platform-lab's `make image`, run
+by its multi-call `/app/llama bench` under restricted Pod Security and
+Kyverno. VM: 8 vCPU (host-passthrough), 12 GiB, full platform stack running
+(about 1.3 cores busy at idle). llama.cpp picked its `zen4` CPU backend.
+`-lm none`, 3 repetitions. Raw: `results/build-vm/llama-bench.jsonl`.
+
+| Threads | pp512 | tg128 | pp512 @4k ctx | tg128 @4k ctx |
+|---|---|---|---|---|
+| 4 | 77.0 (96% of host) | 14.8 (90%) | | |
+| 6 | 100.1 | 15.0 | 86.2 | 12.8 |
+| 8 | 120.7 (83%) | 11.9 (71%) | 106.6 (86%) | 10.7 (72%) |
+
+- With all 8 vCPUs, generation drops to 71% of the host: the platform's
+  own pods take about 1.3 cores, and llama.cpp's threads wait for each
+  other on every token, so one preempted thread stalls them all.
+- 6 threads gives the best generation (90% of host, lowest variance);
+  8 threads gives the best prompt processing.
+- `llama-server` sets these separately (`--threads` for generation,
+  `--threads-batch` for prompt processing), so the pod starts with
+  `-t 6 -tb 8`; to be confirmed from the server's own timings in Week 3.
+- The remaining ~10% at 4-6 threads is the VM itself (memory
+  virtualization); huge pages for the guest are a possible later tweak.

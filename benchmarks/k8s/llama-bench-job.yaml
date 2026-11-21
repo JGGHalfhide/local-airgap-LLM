@@ -1,0 +1,108 @@
+# One-off benchmark of the chosen model inside build-node-01, as a Kubernetes
+# Job under platform-lab's policies (restricted Pod Security, Kyverno: signed
+# images from the platform registry pinned by digest, labels, resources).
+#
+# Model delivery here is temporary: an init container downloads the pinned
+# GGUF from Hugging Face (the build cluster is connected) and checks its
+# SHA-256 before the benchmark starts. Week 2 replaces this with a signed
+# OCI artifact in Zot.
+#
+# Run:  kubectl apply -f benchmarks/k8s/llama-bench-job.yaml
+#       kubectl -n llm-bench wait --for=condition=complete job/llama-bench --timeout=60m
+#       kubectl -n llm-bench logs job/llama-bench -c bench | grep '^{' > benchmarks/results/build-vm/llama-bench.jsonl
+#       kubectl delete -f benchmarks/k8s/llama-bench-job.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm-bench
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: llama-bench
+  namespace: llm-bench
+  labels:
+    app.kubernetes.io/name: llama-bench
+    app.kubernetes.io/part-of: local-airgap-llm
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-bench
+        app.kubernetes.io/part-of: local-airgap-llm
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: fetch-model
+          # library/alpine:3.22, signed in Zot by platform-lab's make image
+          image: 127.0.0.1:30500/library/alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              f=/models/Qwen3.5-4B-Q4_K_M.gguf
+              wget -q -O "$f.part" "https://huggingface.co/ggml-org/Qwen3.5-4B-GGUF/resolve/8d43d974efc48399cb58957ad49c8b26bf5a109c/Qwen3.5-4B-Q4_K_M.gguf"
+              echo "217002fa8008ef4fc6d548353a3aebef055a96e6ff8e0e2c0953ef8254a89c14  $f.part" | sha256sum -c -
+              mv "$f.part" "$f"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      containers:
+        - name: bench
+          # ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d (llama.cpp
+          # v1.0.0, commit b1b770d9), published and signed by make image. The
+          # multi-call /app/llama binary includes "bench".
+          image: 127.0.0.1:30500/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
+          command: ["/bin/sh", "-ec"]
+          # Same tests as scripts/bench.py on the host: a thread sweep at an
+          # empty context, then 4096 tokens of context. Load mode none, as
+          # the server will run (ADR 0001). JSONL on stdout.
+          args:
+            - |
+              m=/models/Qwen3.5-4B-Q4_K_M.gguf
+              nproc >&2
+              /app/llama bench -m "$m" -lm none -r 3 -t 4,6,8 -p 512 -n 128 -o jsonl
+              /app/llama bench -m "$m" -lm none -r 3 -t 6,8 -p 512 -n 128 -d 4096 -o jsonl
+          resources:
+            requests:
+              cpu: "4"
+              memory: 4Gi
+            limits:
+              memory: 6Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+      volumes:
+        - name: models
+          emptyDir:
+            sizeLimit: 4Gi
