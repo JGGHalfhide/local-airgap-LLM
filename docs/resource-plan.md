@@ -1,7 +1,6 @@
 # Resource plan: two VMs on one host
 
-Status: proposed (Week 1, 11/21). Platform baseline memory to be confirmed
-when the VMs are up; this page is updated with the measured numbers.
+Status: applied (Week 1, 11/21). Both VMs resized and running.
 
 ## Host
 
@@ -32,27 +31,30 @@ Zarf registry) plus about 2.8 GiB in the node's containerd store or volume.
 
 | | vCPU | RAM | Disk (thin qcow2) |
 |---|---|---|---|
-| build-node-01 (today 4 / 12 GiB / 40 GiB) | 8 | 12 GiB | 60 GiB |
-| airgap target (rehearsal VM today 4 / 8 GiB / 60 GiB) | 8 | 12 GiB | 60 GiB |
+| build-node-01 (was 4 / 12 GiB / 40 GiB) | 8 | 12 GiB | 40 GiB (unchanged) |
+| airgap target (rehearsal VM, was 4 / 8 GiB / 60 GiB) | 8 | 12 GiB | 60 GiB |
 | Host left when both run | | about 4 GiB | |
 
 - vCPUs are overcommitted (16 vCPUs on 16 host threads). Acceptable: only
   one cluster is load-tested at a time, and both VMs running inference at
   once would contend for the same memory bandwidth anyway.
-- 12 GiB per VM = platform baseline (on the 8 GiB iMac: 3.7 GiB in use
-  before the monitoring stack; to be measured with the full stack) + the
-  inference pod (up to 6 GiB limit) + KEDA.
+- 12 GiB per VM = platform baseline + the inference pod (up to 6 GiB
+  limit) + KEDA. Measured 11/21 on build-node-01 with the full stack (Argo
+  CD, Zot, Kyverno, kube-prometheus-stack, Loki, Alloy, Velero, sample app):
+  4 GiB used, 6 GiB available of 11 GiB visible to the guest. The pod fits
+  with little slack; KEDA and the dashboards are measured in Week 4.
 - Both VMs only need to run together while moving packages; Zarf packages
   are created on the host. If memory is tight, the build VM can be shut
   down while the airgap VM is tested.
 
-## Changes needed in platform-lab
+## Changes made in platform-lab (11/21)
 
-- `rehearsal_vcpus = 8`, `rehearsal_memory_mib = 12288`; the descriptions
-  stop referring to the iMac. Possibly rename the module from rehearsal to
-  airgap target.
-- `vcpus = 8`; `disk_size_gib = 60` for build-node-01.
-- Check before applying whether the libvirt provider changes vCPU/RAM in
-  place (VM restart) or replaces the domain, and whether growing the disk
-  replaces the volume. Anything that destroys a VM or volume is confirmed
-  first.
+- `vcpus = 8`; `rehearsal_vcpus = 8`, `rehearsal_memory_mib = 12288`;
+  descriptions and the module comment no longer refer to the iMac. The
+  module keeps its `airgap_rehearsal` name (a rename needs `moved` blocks
+  and Makefile/inventory changes for no functional gain).
+- build-node-01's disk stays at 40 GiB: the libvirt provider (0.9.x)
+  cannot resize a volume in place ("Storage volumes cannot be updated. All
+  changes require replacement."), so growing it would mean rebuilding the
+  build node. 15.8 GiB of 40 was allocated on 11/21; the model adds about
+  6 GiB (registry blob plus the node's copy). Revisit if disk gets tight.

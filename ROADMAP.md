@@ -40,6 +40,7 @@ Acceptance: model and runtime in Zot, both signed; tampered or unsigned model de
 Goal: an OpenAI-compatible endpoint running under the platform's policies.
 
 - [ ] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR.
+- [ ] Serving layer ADR: plain Deployment + Service vs KServe (InferenceService, its llama.cpp/custom runtime, scale-to-zero) and llm-d. Compare footprint on one small node, airgap packaging (extra images/CRDs in Zarf), fit with Kyverno/restricted PSS, and overlap with KEDA. Option: deploy KServe alongside and serve the same model both ways for a measured comparison.
 - [ ] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo)
 - [ ] Restricted Pod Security, sized requests/limits, labels, no Secrets in env: passes platform-lab's Kyverno policies as-is, or scoped exceptions documented
 - [ ] Kyverno: model artifact signature verified at admission (extend verify-platform-images, or a new policy in platform-lab)
