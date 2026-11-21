@@ -1,0 +1,25 @@
+# yamllint config for CI, same rules as platform-lab: Kubernetes-style
+# sequence indentation, no leading "---", long lines allowed (image digests,
+# CEL). Keeps the checks that catch real mistakes: syntax, duplicate keys,
+# inconsistent indentation within a file, truthy values, trailing spaces.
+extends: default
+
+ignore: |
+  build/
+  .ansible/
+  models/
+
+rules:
+  document-start: disable
+  line-length: disable
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  braces:
+    max-spaces-inside: 1
+  indentation:
+    spaces: consistent
+    indent-sequences: whatever
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
