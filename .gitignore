@@ -11,3 +11,5 @@ kubeconfig*
 *.tfstate.*
 .terraform/
 .env
+# Python bytecode
+__pycache__/

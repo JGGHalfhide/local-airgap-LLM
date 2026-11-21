@@ -13,11 +13,11 @@ and a tag, like platform-lab.
 
 Goal: repo, second cluster sized, and a model picked by measurement.
 
-- [ ] Git repo (GitHub), README stub, LICENSE, .gitignore (NOTES.txt, models/, build/, kubeconfig*), yamllint, CI skeleton
-- [ ] Resource plan for two VMs on ~28 GiB usable: build-node-01 and the airgap target (vCPU, RAM, disk for model blobs in Zot and on nodes). Record in docs/.
+- [x] Git repo (GitHub), README stub, LICENSE, .gitignore (NOTES.txt, models/, build/, kubeconfig*), yamllint, CI skeleton
+- [~] Resource plan for two VMs on ~28 GiB usable: build-node-01 and the airgap target (vCPU, RAM, disk for model blobs in Zot and on nodes). Record in docs/. (Proposed 11/21: docs/resource-plan.md; baseline memory to measure.)
 - [ ] platform-lab change: turn `airgap_rehearsal` into a sized airgap target (vars for vCPU/RAM/disk; maybe rename), bring it up with `make airgap-up`-style flow on the VM. Note in both repos.
-- [ ] Benchmark candidate models on this CPU (llama.cpp `llama-bench`, first on the host, then inside the build VM to see VM overhead): 3-4 openly licensed GGUF models, 3-8B, Q4_K_M (and one Q8 for comparison). Record prompt and generation tokens/s, RAM, load time.
-- [ ] ADR 0001: runtime (llama.cpp server vs alternatives). ADR 0002: model choice from the benchmark (license, size, speed, quality notes).
+- [~] Benchmark candidate models on this CPU (llama.cpp `llama-bench`, first on the host, then inside the build VM to see VM overhead): 3-4 openly licensed GGUF models, 3-8B, Q4_K_M (and one Q8 for comparison). Record prompt and generation tokens/s, RAM, load time. (Host done 11/21: benchmarks/README.md; in-VM run still to do.)
+- [x] ADR 0001: runtime (llama.cpp server vs alternatives). ADR 0002: model choice from the benchmark (license, size, speed, quality notes). (11/21: Qwen3.5 4B Q4_K_M.)
 - [ ] Tag v0.1
 
 Acceptance: both VMs sized and documented; a model chosen with numbers behind it.
@@ -94,11 +94,13 @@ Acceptance: a fresh clone of both repos reproduces the endpoint on both clusters
 - Image volumes vs init container for the model (Week 3). Image volumes are stable in 1.36, so the open part is: does Kyverno 1.19 verify image-volume references (or only container images)?
 - One model or two (a small fast one plus a larger one) for comparison?
 - iGPU (Radeon 780M via Vulkan) as a stretch goal, or never?
-- Does the inference endpoint need auth (API key from Vault) even inside the cluster?
+- Does the inference endpoint need auth (API key from Vault) even inside the cluster? (Phase 3 agents will be in-cluster clients, so decide with them in mind.)
+- Model choice should weigh tool calling / structured output and speed at long context, not just tokens/s on an empty prompt: Phase 3 agents depend on both.
 
 ## After this: Phase 3, agents on Kubernetes
 
-Placeholder, to plan after v1.0. Agent workloads that call the in-cluster
+A separate repo and project, planned after v1.0: airgapped agents running in
+Kubernetes, using this repo's in-cluster endpoint. Agent workloads that call the in-cluster
 endpoint: per-agent identity (ServiceAccount, RBAC), tools behind
 NetworkPolicy and Kyverno, prompts and tool configs versioned through GitOps,
 every model and tool call traced. Candidate first agent: an incident triage

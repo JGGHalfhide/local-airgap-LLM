@@ -33,12 +33,12 @@ platform-lab provides the clusters; this repo provides the workload.
   Both VMs at once must fit in ~28 GiB with headroom for the host.
 - The iMac (airgap-node-01) is retired for this project.
 
-## Decisions so far (11/20)
+## Decisions so far (11/20-11/21)
 - CPU-only inference.
-- Runtime: llama.cpp server (OpenAI-compatible API, Prometheus metrics, runs
-  non-root) unless the Week 1 benchmark says otherwise. vLLM is GPU-oriented.
-- Model: small quantized GGUF (about 3-8B, Q4). Chosen by benchmark on this
-  CPU in Week 1, not upfront.
+- Model (11/21, ADR 0002): Qwen3.5 4B Q4_K_M from ggml-org/Qwen3.5-4B-GGUF,
+  Apache-2.0. Fallback: Granite 4.2 3B Q4_K_M.
+- Runtime (11/21, ADR 0001): llama.cpp llama-server v1.0.0, CPU build,
+  --jinja --load-mode none (v1.0 renamed --no-mmap). Benchmarks in benchmarks/.
 - Airgap target: second VM, not the iMac.
 - Separate repo from platform-lab.
 
@@ -84,6 +84,8 @@ Standing preferences for the notes (user, 11/20):
   (short summary as the body, piped on stdin).
 
 ## Current status
-11/20: project directory created with this file, ROADMAP.md and NOTES.txt.
-No git repo yet (the user creates it next session). Next: Week 1 in ROADMAP.md.
+11/21: public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Host
+benchmarks done, model and runtime chosen, resource plan proposed. Next: the
+platform-lab VM resize (docs/resource-plan.md), in-VM benchmark, tag v0.1.
+Phase 3 (airgapped agents on Kubernetes) will be a separate repo.
 See ROADMAP.md for the checklist.

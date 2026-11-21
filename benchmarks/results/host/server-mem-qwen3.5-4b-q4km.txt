@@ -1,0 +1,6 @@
+Qwen3.5-4B-Q4_K_M.gguf, llama-server -t 8, default slots (4, unified KV)
+mmap, ctx 8k                 peak  5195 MiB  (anon  2295, file-backed  2899)
+no mmap, ctx 8k              peak  3981 MiB  (anon  3962, file-backed    18)
+no mmap, no repack, ctx 8k   peak  3646 MiB  (anon  3628, file-backed    18)
+no mmap, ctx 32k             peak  4744 MiB  (anon  4726, file-backed    18)
+no mmap, ctx 32k, 1 slot     peak  4589 MiB  (anon  4570, file-backed    18)

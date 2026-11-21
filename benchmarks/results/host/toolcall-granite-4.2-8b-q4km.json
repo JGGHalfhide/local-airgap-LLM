@@ -1,0 +1,66 @@
+{
+  "model": "granite-4.2-8b-q4km",
+  "server_ready_s": 2.01,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case": "single_tool",
+      "ok": true,
+      "seconds": 8.26,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_status",
+            "arguments": "{\"namespace\":\"llm\",\"pod\":\"inference-0\"}"
+          },
+          "id": "vnuUQneB2X1FFNxjNIgz0rCUvklCzEjY"
+        }
+      ]
+    },
+    {
+      "case": "pick_tool",
+      "ok": true,
+      "seconds": 11.0,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_logs",
+            "arguments": "{\"namespace\":\"web\",\"pod\":\"api-7f\",\"lines\":50}"
+          },
+          "id": "DBNTP6CJjhUZQwbc0jgAIjZrqqeCHh8L"
+        }
+      ]
+    },
+    {
+      "case": "no_tool",
+      "ok": true,
+      "seconds": 2.26,
+      "error": null,
+      "content": "RKE2 is a lightweight, production-ready Kubernetes distribution that simplifies Kubernetes deployment and management.",
+      "tool_calls": null
+    },
+    {
+      "case": "json_schema",
+      "ok": true,
+      "seconds": 5.82,
+      "error": null,
+      "content": "{\n  \"severity\": \"critical\",\n  \"component\": \"etcd\",\n  \"summary\": \"etcd on the only control-plane node has had no leader for 10 minutes; the API server returns errors to every request.\"\n}",
+      "tool_calls": null
+    },
+    {
+      "case": "tool_result",
+      "ok": true,
+      "seconds": 9.71,
+      "error": null,
+      "content": "The pod `inference-0` in namespace `llm` is **not healthy**. \n\nHere are the details from the status:\n- **Phase**: Running\n- **Ready**: false\n- **Restart count**: 14\n- **Reason**: CrashLoopBackOff\n\nThe pod is repeatedly crashing (CrashLoopBackOff) and has not reached a ready state. You may need to investigate logs or configuration to resolve the crash.",
+      "tool_calls": null
+    }
+  ]
+}

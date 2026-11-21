@@ -1,0 +1,9 @@
+# Week 1 benchmark candidates. Openly licensed (Apache-2.0), official GGUF
+# publishers only, pinned to a Hugging Face revision and the file's SHA-256
+# (from the Hub's LFS metadata). Checked 2026-11-21.
+# name	repo	revision	file	sha256	license
+granite-4.2-3b-q4km	ibm-granite/granite-4.2-3b-GGUF	c40945d71cd90f249a56985e8155551a9188dc30	granite-4.2-3b-Q4_K_M.gguf	e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5	apache-2.0
+qwen3.5-4b-q4km	ggml-org/Qwen3.5-4B-GGUF	8d43d974efc48399cb58957ad49c8b26bf5a109c	Qwen3.5-4B-Q4_K_M.gguf	217002fa8008ef4fc6d548353a3aebef055a96e6ff8e0e2c0953ef8254a89c14	apache-2.0
+qwen3.5-4b-q8	ggml-org/Qwen3.5-4B-GGUF	8d43d974efc48399cb58957ad49c8b26bf5a109c	Qwen3.5-4B-Q8_0.gguf	1b19cef95f45262988c3a82319cc0018022ef4a930ee11182425023587cd2ca5	apache-2.0
+granite-4.2-8b-q4km	ibm-granite/granite-4.2-8b-GGUF	93f3f6a8938ee922b784cf4e5b4203cd3428df8f	granite-4.2-8b-Q4_K_M.gguf	16a9369d0805f80b7377d25d87f937a90c05dc04ad79173a52001e42c9aab311	apache-2.0
+ministral-3-8b-q4km	mistralai/Ministral-3-8B-Instruct-2512-GGUF	0102285ad796bd99af90f58de616092e5630e970	Ministral-3-8B-Instruct-2512-Q4_K_M.gguf	33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761	apache-2.0

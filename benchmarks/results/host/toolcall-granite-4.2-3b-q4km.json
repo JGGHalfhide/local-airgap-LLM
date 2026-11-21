@@ -1,0 +1,66 @@
+{
+  "model": "granite-4.2-3b-q4km",
+  "server_ready_s": 1.01,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case": "single_tool",
+      "ok": true,
+      "seconds": 3.48,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_status",
+            "arguments": "{\"namespace\":\"llm\",\"pod\":\"inference-0\"}"
+          },
+          "id": "cTPoLwDWkwEFMkPHaGQSYl73oJQMV4Ip"
+        }
+      ]
+    },
+    {
+      "case": "pick_tool",
+      "ok": true,
+      "seconds": 4.68,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_logs",
+            "arguments": "{\"namespace\":\"web\",\"pod\":\"api-7f\",\"lines\":50}"
+          },
+          "id": "jxVc3J42mULRy1AIpT7l2yfEyFj0eeAm"
+        }
+      ]
+    },
+    {
+      "case": "no_tool",
+      "ok": true,
+      "seconds": 1.07,
+      "error": null,
+      "content": "RKE2 is a distribution of Kubernetes for managing containerized workloads and services, optimized for production environments.",
+      "tool_calls": null
+    },
+    {
+      "case": "json_schema",
+      "ok": true,
+      "seconds": 2.35,
+      "error": null,
+      "content": "{\n  \"severity\": \"high\",\n  \"component\": \"etcd\",\n  \"summary\": \"etcd on the only control-plane node has had no leader for 10 minutes; the API server returns errors to every request.\"\n}",
+      "tool_calls": null
+    },
+    {
+      "case": "tool_result",
+      "ok": true,
+      "seconds": 3.69,
+      "error": null,
+      "content": "The pod `inference-0` in namespace `llm` is not healthy. Its phase is `Running`, but it is not ready (`ready: false`). The pod is experiencing a `CrashLoopBackOff` situation with 14 restarts. This indicates the pod is crashing repeatedly and cannot become ready. You may need to investigate the pod's logs or configuration to resolve the issue.",
+      "tool_calls": null
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "model": "qwen3.5-4b-q8",
+  "server_ready_s": 1.0,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case": "single_tool",
+      "ok": true,
+      "seconds": 6.24,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_status",
+            "arguments": "{\"namespace\":\"llm\",\"pod\":\"inference-0\"}"
+          },
+          "id": "ZvrH28PvdLXARAiDurAGGxBJ7kM3iGbU"
+        }
+      ]
+    },
+    {
+      "case": "pick_tool",
+      "ok": true,
+      "seconds": 8.55,
+      "error": null,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_logs",
+            "arguments": "{\"namespace\":\"web\",\"pod\":\"api-7f\",\"lines\":50}"
+          },
+          "id": "OXbUuZifjUoeiLiUKlLNmzFQ61Md0Bcn"
+        }
+      ]
+    },
+    {
+      "case": "no_tool",
+      "ok": true,
+      "seconds": 1.96,
+      "error": null,
+      "content": "RKE2 is a lightweight, open-source Kubernetes distribution designed for edge and bare-metal environments.",
+      "tool_calls": null
+    },
+    {
+      "case": "json_schema",
+      "ok": true,
+      "seconds": 4.54,
+      "error": null,
+      "content": "{\n  \"severity\": \"critical\",\n  \"component\": \"etcd\",\n  \"summary\": \"No leader elected for 10 minutes on the sole control-plane node causing API server failures.\"\n}",
+      "tool_calls": null
+    },
+    {
+      "case": "tool_result",
+      "ok": true,
+      "seconds": 5.25,
+      "error": null,
+      "content": "No, the pod `inference-0` in the `llm` namespace is not healthy. It is in a `CrashLoopBackOff` state, meaning it is restarting repeatedly and failing to start successfully. Additionally, it has restarted 14 times.",
+      "tool_calls": null
+    }
+  ]
+}
