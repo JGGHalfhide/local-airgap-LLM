@@ -31,7 +31,7 @@ Goal: the model is a signed, verifiable artifact in Zot, like the images.
 - [x] Sign with the lab cosign key (same flags as platform-lab: no Rekor); attach a provenance/SBOM-style attestation (tampered copy rejected at admission, docs/scans/model-admission-test.txt.)
 - [x] Runtime image (llama.cpp server) through platform-lab's `make image` (SBOM, Trivy gate, sign) (11/21, during Week 1.)
 - [x] `make model` (pull, verify checksum, package, push, sign) reusing platform-lab scripts where possible (uses platform-lab's scripts/lib.sh.)
-- [ ] Tag v0.2
+- [x] Tag v0.2
 
 Acceptance: model and runtime in Zot, both signed; tampered or unsigned model detectable.
 
