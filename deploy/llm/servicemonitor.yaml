@@ -1,0 +1,17 @@
+# Prometheus scrapes llama-server's /metrics (enabled with --metrics) through
+# the Service. platform-lab's Prometheus selects ServiceMonitors in every
+# namespace; the NetworkPolicy lets Prometheus in on 8080.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: llama-server
+  labels:
+    app.kubernetes.io/name: llama-server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-server
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

@@ -62,17 +62,33 @@ Zarf registry) plus about 2.8 GiB in the node's containerd store or volume.
   build node. 15.8 GiB of 40 was allocated on 11/21; the model adds about
   6 GiB (registry blob plus the node's copy). Revisit if disk gets tight.
 
-## As deployed (Week 3, 11/22)
+## As deployed (Week 3-4, 11/22)
 
-The pod runs smaller than planned above: `--ctx-size 8192` (4 slots sharing
-the KV cache), requests 4 CPU / 4 GiB, limit 5 GiB (peak measured: 3.9 GiB).
+First deployed at 8k context, 4 GiB request / 5 GiB limit: on the 12 GiB
+build VM the platform's pods already requested 6.2 GiB and 2.75 CPU, so the
+plan above did not fit next to Week 4's KEDA and dashboards.
 
-- CPU: the platform's pods already request 2.75 CPU of 8 allocatable, so a
-  6-CPU request cannot be scheduled. The request is 4; there is no CPU
-  limit, so the 6/8 threads still get the idle cores.
-- Memory: with the server running, requests are 10.2 of 11.4 GiB
-  allocatable. The planned 32k context (5 GiB request) would leave about
-  0.2 GiB for KEDA and the Week 4 dashboards.
-- 32k context for Phase 3 agents: revisit after Week 4 has measured KEDA's
-  footprint (needs a bigger VM or a smaller platform footprint).
+Then both VMs went to 16 GiB (platform-lab 38337fd; the user's call, 11/22)
+and the pod to the planned 32k context (c75b12e):
 
+| | build-node-01 |
+|---|---|
+| VM | 8 vCPU / 16 GiB (15.4 GiB allocatable) |
+| Pod | `--ctx-size 32768`, 4 slots sharing the KV cache; requests 4 CPU / 5 GiB, limit 6 GiB |
+| Node requests with the pod | 6.75 of 8 CPU, 10.2 of 15.4 GiB |
+
+- CPU request 4, not 6: a 6-CPU request still cannot be scheduled (2.75 +
+  6 > 8). There is no CPU limit, so the 6/8 threads use the idle cores.
+- Measured at 32k (11/22): a 29,713-token prompt, answered correctly;
+  prompt processing 80 tok/s at that length (about 120 at 800 tokens).
+  Process peak (VmHWM) 4.66 GiB, as in Week 1. The cgroup sits at the
+  6 GiB limit because 1.3 GiB of page cache from reading the model file is
+  charged to it; the kernel reclaims it (memory.events: max 1, oom 0).
+  Real headroom about 1.3 GiB.
+- **Run one VM at a time.** 16 + 16 GiB exceeds the host's 28.2 GiB. The
+  build VM creates the Zarf packages (Week 5); shut it down before starting
+  the airgap VM. `terraform apply` starts both VMs: shut the idle one down
+  afterwards (`virsh shutdown`).
+- A memory change applies in place but needs a power cycle
+  (`virsh shutdown` + `virsh start`); a reboot inside the guest keeps the
+  old size.

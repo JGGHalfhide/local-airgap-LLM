@@ -1,12 +1,10 @@
-# Inference endpoint (ADR 0004): llama-server Deployment + Service, synced by
-# the Argo CD Application `local-airgap-llm` in platform-lab's root app.
+# Inference endpoint, synced by the Argo CD Application `local-airgap-llm` in
+# platform-lab's root app. Two parts, because Grafana's dashboard sidecar
+# only watches the monitoring namespace:
+#   llm/         namespace llm: server, Service, NetworkPolicies, ServiceMonitor
+#   monitoring/  Grafana dashboard ConfigMap in the monitoring namespace
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: llm
-labels:
-  - pairs:
-      app.kubernetes.io/part-of: local-airgap-llm
 resources:
-  - namespace.yaml
-  - llama-server.yaml
-  - networkpolicy.yaml
+  - llm
+  - monitoring

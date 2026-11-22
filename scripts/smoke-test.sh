@@ -117,7 +117,7 @@ done
 echo
 echo "## 4. unsigned model image at admission"
 # The model reference in the Deployment: 127.0.0.1:30500/models/<name>@<digest>.
-signed=$(grep -o 'models/[^@]*@sha256:[0-9a-f]*' "$root/deploy/llama-server.yaml")
+signed=$(grep -o 'models/[^@]*@sha256:[0-9a-f]*' "$root/deploy/llm/llama-server.yaml")
 repo=${signed%@*}
 registry_env
 unsigned=$(crane mutate "$REGISTRY/$signed" \

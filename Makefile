@@ -1,7 +1,7 @@
 # Model chosen in ADR 0002; any row of benchmarks/candidates.tsv works.
 MODEL ?= qwen3.5-4b-q4km
 
-.PHONY: model smoke lint
+.PHONY: model smoke dashboard lint
 
 # Fetch, verify, package, push, sign and attest the model (ADR 0003).
 # Needs platform-lab next to this repo and its registry running.
@@ -12,6 +12,10 @@ model:
 # NetworkPolicy, no egress, unsigned model rejected. Needs KUBECONFIG.
 smoke:
 	./scripts/smoke-test.sh
+
+# Regenerate the Grafana dashboard JSON (deploy/monitoring/dashboards/).
+dashboard:
+	python3 scripts/gen-dashboard.py
 
 lint:
 	yamllint -s .
