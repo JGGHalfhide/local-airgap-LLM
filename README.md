@@ -8,7 +8,50 @@ cluster with no internet.
 
 [![ci](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml)
 
-**Status:** Week 2 of 6 (the model as a signed OCI image: [docs/model-image.md](docs/model-image.md)). See [ROADMAP.md](ROADMAP.md).
+**Status:** Week 3 of 6: an OpenAI-compatible endpoint on the build cluster, synced by Argo CD, the model verified at admission ([docs/stack.md](docs/stack.md)). See [ROADMAP.md](ROADMAP.md).
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph up["Upstream"]
+    hf[("Hugging Face<br/>pinned GGUF")]
+    ghcr[("ghcr.io<br/>llama.cpp server")]
+  end
+
+  subgraph host["Build host"]
+    mm["make model<br/>SHA-256 check, OCI image,<br/>cosign sign + SLSA provenance"]
+    mi["make image (platform-lab)<br/>SBOM, Trivy gate, cosign"]
+    zp["Zarf packages<br/>(Week 5)"]
+  end
+
+  subgraph gh["GitHub"]
+    repo["deploy/<br/>Deployment, Service,<br/>NetworkPolicy"]
+  end
+
+  subgraph build["Build cluster: RKE2 CIS, platform-lab"]
+    zot[("Zot")]
+    argo["Argo CD"]
+    kyv["Pod Security + Kyverno<br/>signature check on<br/>image + model volume"]
+    srv["llama-server<br/>model mounted read-only,<br/>no egress"]
+    cli["Client pods<br/>(labelled)"]
+  end
+
+  subgraph ag["Airgap VM (Week 5)"]
+    zreg[("Zarf registry")]
+    srv2["llama-server"]
+  end
+
+  hf --> mm --> zot
+  ghcr --> mi --> zot
+  repo -- "GitOps sync" --> argo --> kyv --> srv
+  zot -- "signed digests" --> srv
+  cli -- "OpenAI API :8080" --> srv
+  zot --> zp -- "signed packages" --> zreg --> srv2
+```
+
+Every tool, its version, why it was chosen, the pipeline and the data flow:
+[docs/stack.md](docs/stack.md).
 
 ## How it fits with platform-lab
 
