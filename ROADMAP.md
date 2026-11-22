@@ -18,7 +18,7 @@ Goal: repo, second cluster sized, and a model picked by measurement.
 - [x] platform-lab change: turn `airgap_rehearsal` into a sized airgap target (vars for vCPU/RAM/disk; maybe rename), bring it up with `make airgap-up`-style flow on the VM. Note in both repos. (11/21: resized to 8 vCPU / 12 GiB / 60 GiB, VM up, platform-lab b293cda; RKE2 on it comes in Week 5.)
 - [x] Benchmark candidate models on this CPU (llama.cpp `llama-bench`, first on the host, then inside the build VM to see VM overhead): 3-4 openly licensed GGUF models, 3-8B, Q4_K_M (and one Q8 for comparison). Record prompt and generation tokens/s, RAM, load time. (11/21: host and in-cluster Job on build-node-01; benchmarks/README.md.)
 - [x] ADR 0001: runtime (llama.cpp server vs alternatives). ADR 0002: model choice from the benchmark (license, size, speed, quality notes). (11/21: Qwen3.5 4B Q4_K_M.)
-- [ ] Tag v0.1
+- [x] Tag v0.1
 
 Acceptance: both VMs sized and documented; a model chosen with numbers behind it.
 
@@ -26,10 +26,10 @@ Acceptance: both VMs sized and documented; a model chosen with numbers behind it
 
 Goal: the model is a signed, verifiable artifact in Zot, like the images.
 
-- [ ] Model as an OCI artifact in Zot (ORAS, or an OCI image wrapping the GGUF for image volumes; decide which, ADR)
+- [ ] Model as an OCI artifact in Zot (ORAS, or an OCI image wrapping the GGUF for image volumes; decide which, ADR) (11/21: ADR 0003, OCI image + image volume; platform-lab policies now cover image volumes.)
 - [ ] Provenance recorded with it: source URL, license, upstream SHA-256, quantization
 - [ ] Sign with the lab cosign key (same flags as platform-lab: no Rekor); attach a provenance/SBOM-style attestation
-- [ ] Runtime image (llama.cpp server) through platform-lab's `make image` (SBOM, Trivy gate, sign)
+- [x] Runtime image (llama.cpp server) through platform-lab's `make image` (SBOM, Trivy gate, sign) (11/21, during Week 1.)
 - [ ] `make model` (pull, verify checksum, package, push, sign) reusing platform-lab scripts where possible
 - [ ] Tag v0.2
 
@@ -39,7 +39,7 @@ Acceptance: model and runtime in Zot, both signed; tampered or unsigned model de
 
 Goal: an OpenAI-compatible endpoint running under the platform's policies.
 
-- [ ] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR.
+- [ ] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR. (11/21: decided in ADR 0003, image volume; live mount test still to do.)
 - [ ] Serving layer ADR: plain Deployment + Service vs KServe (InferenceService, its llama.cpp/custom runtime, scale-to-zero) and llm-d. Compare footprint on one small node, airgap packaging (extra images/CRDs in Zarf), fit with Kyverno/restricted PSS, and overlap with KEDA. Option: deploy KServe alongside and serve the same model both ways for a measured comparison.
 - [ ] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo)
 - [ ] Restricted Pod Security, sized requests/limits, labels, no Secrets in env: passes platform-lab's Kyverno policies as-is, or scoped exceptions documented
@@ -92,7 +92,7 @@ Acceptance: a fresh clone of both repos reproduces the endpoint on both clusters
 ## Open questions
 
 - VM sizing: how much RAM can the airgap target get while the build VM runs? Do both need to run at once (only for packaging/transfer)?
-- Image volumes vs init container for the model (Week 3). Image volumes are stable in 1.36, so the open part is: does Kyverno 1.19 verify image-volume references (or only container images)?
+- ~~Image volumes vs init container for the model.~~ Answered 11/21 (ADR 0003): Kyverno 1.19 verifies image volumes only through a custom extractor; platform-lab's image policies now include them.
 - One model or two (a small fast one plus a larger one) for comparison?
 - iGPU (Radeon 780M via Vulkan) as a stretch goal, or never?
 - Does the inference endpoint need auth (API key from Vault) even inside the cluster? (Phase 3 agents will be in-cluster clients, so decide with them in mind.)
