@@ -50,6 +50,8 @@ flowchart LR
   zot --> zp -- "signed packages" --> zreg --> srv2
 ```
 
+![local-airgap-LLM overview: model chosen by measurement, model as a signed image, OpenAI-compatible serving, verified at admission, airgapped deploy, and the measured results](docs/images/overview.png)
+
 Every tool, its version, why it was chosen, the pipeline and the data flow:
 [docs/stack.md](docs/stack.md).
 

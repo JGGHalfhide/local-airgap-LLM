@@ -41,12 +41,12 @@ Goal: an OpenAI-compatible endpoint running under the platform's policies.
 
 - [x] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR. (11/21: decided in ADR 0003, image volume. 11/22: live in the Deployment, model loaded in 4 s from the mount.)
 - [x] Serving layer ADR: plain Deployment + Service vs KServe (InferenceService, its llama.cpp/custom runtime, scale-to-zero) and llm-d. Compare footprint on one small node, airgap packaging (extra images/CRDs in Zarf), fit with Kyverno/restricted PSS, and overlap with KEDA. Option: deploy KServe alongside and serve the same model both ways for a measured comparison. (11/22: ADR 0004, plain Deployment + Service; KServe Standard mode needs cert-manager + a gateway and has no scale from zero, llm-d's CPU path needs 64 cores; measured comparison skipped, reasons in the ADR.)
-- [ ] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo) (11/22: deploy/ applied by hand and tested; platform-lab gitops/apps/local-airgap-llm.yaml written, Argo CD sync after both repos are pushed.)
+- [x] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo) (11/22: deploy/ applied by hand and tested; platform-lab 5ecef14 adds the Application; Argo CD adopted the resources, Synced/Healthy, smoke test passes.)
 - [x] Restricted Pod Security, sized requests/limits, labels, no Secrets in env: passes platform-lab's Kyverno policies as-is, or scoped exceptions documented (11/22: passes as-is, no exceptions.)
 - [x] Kyverno: model artifact signature verified at admission (extend verify-platform-images, or a new policy in platform-lab) (11/21, platform-lab 250acd1: verify-platform-images covers image volumes.)
 - [x] NetworkPolicy: no egress from the inference pods; ingress only from allowed clients (11/22: default deny; ingress from pods and namespaces labelled inference.local-airgap-llm/client=true, and Prometheus.)
 - [x] Smoke test: chat completion through the API; unsigned model rejected (11/22: `make smoke`, docs/scans/week3-smoke-test.txt.)
-- [ ] Tag v0.3
+- [x] Tag v0.3
 
 Acceptance: a completion from the in-cluster endpoint; an unsigned model is rejected at admission.
 
