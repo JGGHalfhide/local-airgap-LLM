@@ -42,12 +42,14 @@ spec:
             - --alias
             - qwen3.5-4b
             - --jinja
-            # No mmap: peak memory 3.9 GiB instead of 5.1 at 8k context
-            # (benchmarks/README.md).
+            # No mmap: peak memory 3.9 GiB instead of 5.1 at 8k context;
+            # 4.6 GiB at 32k (benchmarks/README.md).
             - --load-mode
             - none
+            # 32k tokens shared by 4 slots (unified KV cache): one long
+            # request can use all of it (docs/resource-plan.md).
             - --ctx-size
-            - "8192"
+            - "32768"
             # 6 threads for generation, 8 for prompt processing: best
             # results of the in-cluster benchmark on 8 vCPU.
             - --threads
@@ -82,12 +84,14 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
+          # CPU request 4, not the 6 threads it runs: the platform already
+          # requests 2.75 of 8 CPUs. No CPU limit, so idle cores are used.
           resources:
             requests:
               cpu: "4"
-              memory: 4Gi
-            limits:
               memory: 5Gi
+            limits:
+              memory: 6Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
