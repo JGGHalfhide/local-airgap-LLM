@@ -1,0 +1,18 @@
+# Week 4 cold start, 2026-11-22, build-node-01 (8 vCPU / 16 GiB), KEDA 2.21.1 + HTTP add-on 0.16.0
+# scripts/cold-start.sh 3 (plus one earlier trial run: first byte 5.69 s, ready +6 s)
+
+## run 1
+waiting for zero replicas... ok
+cold: HTTP 200, first byte 6.385140s, reply done 6.804196s (client side)
+pod timeline from the request (s, 1 s resolution): created +0, scheduled +0, container started +1, ready +6
+warm: HTTP 200, first byte 0.006781s, reply done 0.211925s
+## run 2
+waiting for zero replicas... ok
+cold: HTTP 200, first byte 6.223291s, reply done 6.646653s (client side)
+pod timeline from the request (s, 1 s resolution): created +1, scheduled +1, container started +1, ready +6
+warm: HTTP 200, first byte 0.007800s, reply done 0.260056s
+## run 3
+waiting for zero replicas... ok
+cold: HTTP 200, first byte 6.201991s, reply done 6.651978s (client side)
+pod timeline from the request (s, 1 s resolution): created +1, scheduled +1, container started +1, ready +7
+warm: HTTP 200, first byte 0.007509s, reply done 0.212452s

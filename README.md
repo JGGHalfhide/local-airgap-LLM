@@ -8,7 +8,7 @@ cluster with no internet.
 
 [![ci](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml)
 
-**Status:** Week 3 of 6: an OpenAI-compatible endpoint on the build cluster, synced by Argo CD, the model verified at admission ([docs/stack.md](docs/stack.md)). See [ROADMAP.md](ROADMAP.md).
+**Status:** Week 4 of 6: an OpenAI-compatible endpoint on the build cluster that scales to zero and back (cold start ~6.3 s), with metrics and a dashboard ([docs/stack.md](docs/stack.md), [docs/scaling.md](docs/scaling.md)). See [ROADMAP.md](ROADMAP.md).
 
 ## Architecture
 

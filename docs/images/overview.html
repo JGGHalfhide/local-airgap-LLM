@@ -145,13 +145,13 @@
   <div class="band">
     <div class="label">
       <div class="mono">OBSERVE + SCALE</div>
-      <div>Week 4, on both clusters</div>
+      <div>Live on the build cluster</div>
     </div>
     <div class="pill">Prometheus metrics</div>
     <div class="pill">Grafana dashboard</div>
     <div class="pill">KEDA · scale to zero</div>
-    <div class="pill">Loki</div>
-    <div class="pill">Load test · TTFT · p95</div>
+    <div class="pill">Loki · no prompts</div>
+    <div class="pill">Interceptor holds requests</div>
   </div>
 
   <div class="stats">
@@ -166,14 +166,14 @@
       <div class="how">807-token prompt, 8 threads</div>
     </div>
     <div class="stat" style="--c: var(--violet)">
-      <div class="big">3.9<small>GiB</small></div>
+      <div class="big">4.7<small>GiB</small></div>
       <div class="what">peak server memory</div>
-      <div class="how">8k context, 4 slots, no mmap</div>
+      <div class="how">32k context, 4 slots, no mmap</div>
     </div>
     <div class="stat" style="--c: var(--amber)">
-      <div class="big">6<small>s</small></div>
-      <div class="what">pod to ready</div>
-      <div class="how">model loaded from the image volume</div>
+      <div class="big">6.3<small>s</small></div>
+      <div class="what">cold start from zero</div>
+      <div class="how">request to first byte, KEDA 0 → 1</div>
     </div>
   </div>
 

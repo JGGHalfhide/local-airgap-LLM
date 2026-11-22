@@ -54,12 +54,12 @@ Acceptance: a completion from the in-cluster endpoint; an unsigned model is reje
 
 Goal: see it, scale it, measure cold start.
 
-- [ ] llama.cpp metrics scraped (ServiceMonitor); inference dashboard as code: tokens/s, time to first token, p50/p95 latency, requests in flight/deferred, memory
-- [ ] KEDA via Argo CD (restricted PSS, pinned, signed images)
-- [ ] ScaledObject on queue depth / requests in flight; scale-to-zero
-- [ ] Measure cold start (0 -> ready -> first token) and scale-up behaviour on one node
-- [ ] Logs in Loki (no prompt content logged by default; decide and document)
-- [ ] Tag v0.4
+- [x] llama.cpp metrics scraped (ServiceMonitor); inference dashboard as code: tokens/s, time to first token, p50/p95 latency, requests in flight/deferred, memory (11/22: ServiceMonitor, `make dashboard` generates the JSON. llama-server has no latency histograms, so TTFT and p50/p95 are client side: cold-start script now, load test in Week 6. docs/observability.md.)
+- [x] KEDA via Argo CD (restricted PSS, pinned, signed images) (11/22: KEDA 2.21.1 + HTTP add-on 0.16.0 in platform-lab gitops/keda, 578f372: release manifests + patches, six images signed in Zot, projected tokens, 48/48 policy checks; the add-on's images under a scoped Trivy exception for CVE-2026-77524. ADR 0005.)
+- [x] ScaledObject on queue depth / requests in flight; scale-to-zero (11/22: InterceptorRoute on concurrency, 4 per replica; ScaledObject 0-1, 5 min cooldown; clients call llm-api.llm.svc, the server admits only the interceptor.)
+- [x] Measure cold start (0 -> ready -> first token) and scale-up behaviour on one node (11/22: 6.2-6.4 s from a request at zero to the first byte, 6.7 s to a short reply, 3 runs; warm 0.2 s; back to zero 5 min after the last request. docs/scaling.md.)
+- [x] Logs in Loki (no prompt content logged by default; decide and document) (11/22: default verbosity logs no prompt or response text, checked in Loki; debug flags never in deploy/. docs/observability.md. Found a platform-lab inotify limit issue, open there.)
+- [x] Tag v0.4
 
 Acceptance: dashboard with live data; measured cold start; scale to zero and back.
 

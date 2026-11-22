@@ -49,7 +49,7 @@ Q4_K_M.
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | llama.cpp `llama-server` | v1.0.0 (`ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d`, `sha256:e3032ea0…`) | OpenAI-compatible API (`/v1/chat/completions`), tool calls through the model's chat template (`--jinja`), JSON-schema output, Prometheus `/metrics` | CPU-first, reads GGUF from a path, runs as non-root, one image ([ADR 0001](adr/0001-llama-cpp-server-runtime.md)) |
-| Server settings | `--ctx-size 8192`, 4 slots sharing the KV cache, `--load-mode none`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | 3.9 GiB peak; 6 threads for generation, 8 for prompts (confirmed from server timings: ~120 prompt tok/s, ~14.5 generation tok/s) | Measured in Weeks 1 and 3 ([benchmarks/README.md](../benchmarks/README.md)) |
+| Server settings | `--ctx-size 32768`, 4 slots sharing the KV cache, `--load-mode none`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | Process peak 4.7 GiB at 32k; 6 threads for generation, 8 for prompts (server timings: ~120 prompt tok/s at 800 tokens, 80 at 29.7k; ~14.5 generation tok/s) | Measured in Weeks 1, 3 and 4 ([benchmarks/README.md](../benchmarks/README.md), [resource-plan.md](resource-plan.md)) |
 | platform-lab `make image` | | Publishes the runtime image: crane pull, Syft SBOM, Trivy gate, push to Zot, cosign sign + SBOM attestation | The same path as every platform image |
 
 ### Model supply chain
@@ -70,12 +70,23 @@ Q4_K_M.
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | Argo CD | v3.6.1 (platform-lab) | Application `local-airgap-llm` in platform-lab's root app syncs this repo's `deploy/` (automated, prune, self-heal) | Same GitOps flow as every platform app |
-| Kustomize | built into Argo CD | `deploy/kustomization.yaml`: namespace, labels, resources | No templating needed for one Deployment |
-| Deployment + Service | Kubernetes 1.36.5 (RKE2) | One `llama-server` replica, `Recreate` updates (two copies do not fit), ClusterIP Service on 8080 | Smallest serving layer that does the job ([ADR 0004](adr/0004-plain-deployment-serving-layer.md)) |
+| Kustomize | built into Argo CD | `deploy/llm/` (namespace `llm`: server, Services, NetworkPolicies, ServiceMonitor, scaling) and `deploy/monitoring/` (dashboard ConfigMap in `monitoring`) | No templating needed; two parts because Grafana only loads dashboards from `monitoring` |
+| Deployment + Service | Kubernetes 1.36.5 (RKE2) | `llama-server`, 0 or 1 replicas (KEDA owns the count), `Recreate` updates (two copies do not fit), ClusterIP Service on 8080 | Smallest serving layer that does the job ([ADR 0004](adr/0004-plain-deployment-serving-layer.md)) |
 | Image volume | Kubernetes 1.36, containerd 2.3.4 | The kubelet pulls the model image and mounts it read-only at `/models` | No init container, no copy, verified at admission ([ADR 0003](adr/0003-model-as-oci-image-volume.md)) |
 | Namespace `llm` | | Restricted Pod Security (enforce, warn, audit) | The platform default; no exception needed |
-| NetworkPolicy | Canal (RKE2) | Default deny in and out; ingress on 8080 only from pods and namespaces labelled `inference.local-airgap-llm/client: "true"`, and from Prometheus | The server needs no egress at all; clients opt in explicitly |
-| Pod settings | | Non-root UID 65532, read-only root filesystem, no capabilities, no service account token, requests 4 CPU / 4 GiB, limit 5 GiB | Passes all platform-lab policies as written |
+| NetworkPolicy | Canal (RKE2) | `llm`: default deny in and out; the server admits only the KEDA interceptor and Prometheus on 8080. `keda` (platform-lab): the interceptor's proxy port admits only pods and namespaces labelled `inference.local-airgap-llm/client: "true"` | The server needs no egress at all; clients opt in explicitly and cannot bypass the request count that keeps the server up |
+| Pod settings | | Non-root UID 65532, read-only root filesystem, no capabilities, no service account token, requests 4 CPU / 5 GiB, limit 6 GiB, no CPU limit | Passes all platform-lab policies as written |
+| Entry point `llm-api` | ExternalName Service | Clients call `http://llm-api.llm.svc:8080`, which resolves to the KEDA HTTP add-on's interceptor | One stable name whether the server runs or not ([ADR 0005](adr/0005-keda-http-add-on-scale-to-zero.md)) |
+
+### Scaling
+
+| Component | Version | What it does here | Why |
+|---|---|---|---|
+| KEDA | v2.21.1 (platform-lab `gitops/keda`) | Operator, metrics API server and admission webhooks; turns the ScaledObject into an HPA and scales 0 ↔ 1 itself | Event-driven autoscaling including to zero ([ADR 0005](adr/0005-keda-http-add-on-scale-to-zero.md)) |
+| KEDA HTTP add-on | v0.16.0 (platform-lab `gitops/keda`) | Interceptor (proxy that counts requests in flight and holds them during a cold start), scaler (feeds the count to KEDA), operator | KEDA alone cannot wake an HTTP server from zero; beta, but stable |
+| InterceptorRoute `llama-server` | `deploy/llm/scaling.yaml` | Routes `llm-api.llm.svc` to the Service; concurrency target 4 (the slots); holds up to 32 requests, waits up to 180 s for readiness; no response timeouts | Long prompts take minutes; non-streamed replies send headers only at the end |
+| ScaledObject `llama-server` | `deploy/llm/scaling.yaml` | 0-1 replicas, 5 min cooldown, `external-push` trigger from the add-on scaler | Frees 5-6 GiB when idle; one replica fits ([scaling.md](scaling.md)) |
+| Supply chain | `make image` (platform-lab) | All six images signed in Zot, pinned by digest; projected API tokens; the add-on's three under a scoped Trivy exception (CVE-2026-77524 in a library they link but do not call) | Same rules as every platform image |
 
 ### Admission
 
@@ -89,18 +100,24 @@ Q4_K_M.
 
 | Component | Version | What it does here | Why |
 |---|---|---|---|
-| `make smoke` (`scripts/smoke-test.sh`) | | Completion from a client pod; unlabelled pod blocked; no egress from the server; unsigned model copy rejected | The Week 3 acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt)) |
+| `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt)) |
+| `scripts/cold-start.sh` | | Waits for zero replicas, then times a streamed request from a client pod and reads the pod's timeline | Cold start from zero, client side ([scaling.md](scaling.md)) |
 | yamllint | 1.38.0 | `make lint`, CI | Same rules as platform-lab |
 | gitleaks | 8.30.1 | Full-history secret scan in CI | No secrets, kubeconfigs or weights committed |
 | GitHub Actions | `.github/workflows/ci.yml` | yamllint and gitleaks on every push and pull request | Checks without the lab |
 
-### Planned (Weeks 4-6)
+### Observability
+
+| Component | Version | What it does here | Why |
+|---|---|---|---|
+| llama-server `/metrics` + ServiceMonitor | `deploy/llm/servicemonitor.yaml` | Prometheus scrapes token counters and timers, requests processing/deferred, busy slots every 15 s | Server-side throughput and load; no latency histograms exist, so TTFT and percentiles are client side ([observability.md](observability.md)) |
+| Grafana dashboard | `scripts/gen-dashboard.py` → `deploy/monitoring/dashboards/llama-server.json` | Status, throughput, load, memory and CPU, replicas and restarts | Dashboard as code, generated, in the `local-airgap-llm` folder |
+| Loki + Alloy | platform-lab | Server and KEDA logs; no prompt or response content (default verbosity, checked) | Prompts stay out of the log store by default ([observability.md](observability.md#logs)) |
+
+### Planned (Weeks 5-6)
 
 | Component | What it will do | Week |
 |---|---|---|
-| ServiceMonitor + Grafana dashboard | Scrape `llama-server` `/metrics`; tokens/s, time to first token, p50/p95, requests in flight, memory | 4 |
-| KEDA | Scale the Deployment on requests in flight or queue depth, including to zero; measure cold start | 4 |
-| Loki (platform-lab) | Server logs, with no prompt content logged by default | 4 |
 | Zarf | Packages for the runtime, the model image and its signatures, KEDA, manifests and dashboard, signed on the host and deployed with egress blocked | 5 |
 | k6 or a small script | Load test at concurrency 1/2/4/8; cost per million tokens from measured power draw | 6 |
 
@@ -145,12 +162,21 @@ cosign signature and SBOM attestation.
    waits for `/health` (model loaded in about 4 s; ready in about 6 s with
    the images cached).
 
-### 5. Verify: `make smoke`
+### 5. Scale: KEDA (Week 4)
 
-Completion through the Service, NetworkPolicy both ways, and an unsigned
-copy of the model image rejected at admission (server-side dry run).
+Idle for 5 minutes, KEDA scales `llama-server` to zero. A request to
+`llm-api` reaches the interceptor, which holds it, reports one request in
+flight to KEDA, and forwards it once the pod is ready; KEDA keeps the pod
+while requests are in flight and for the cooldown after. Cold start:
+[scaling.md](scaling.md).
 
-### 6. Airgap (Week 5, planned)
+### 6. Verify: `make smoke`
+
+Completion through `llm-api`, NetworkPolicy (unlabelled pod blocked, no
+bypass of the interceptor, no egress), and an unsigned copy of the model
+image rejected at admission (server-side dry run).
+
+### 7. Airgap (Week 5, planned)
 
 Zarf packages built on the host from the same digests, signatures
 included, carried to the airgap VM, deployed with `--verify=always`; the
@@ -165,14 +191,19 @@ kubelet after Kyverno verified the signature) → read-only mount `/models`
 → `llama-server` loads it into memory (no mmap) and repacks the weights for
 the CPU. Nothing in the pod downloads anything.
 
-**A request.** Client pod (labelled, in a labelled namespace) → Service
-`llama-server.llm.svc:8080` → NetworkPolicy allows it → `llama-server`
-applies the chat template, processes the prompt (8 threads), generates
-(6 threads) in one of 4 slots, returns OpenAI-format JSON with token counts
-and timings. The server cannot open any connection out.
+**A request.** Client pod (labelled, in a labelled namespace) →
+`llm-api.llm.svc:8080` (ExternalName) → KEDA interceptor in `keda` (its
+NetworkPolicy checks the client labels; it counts the request and, if the
+server is at zero, holds it while KEDA starts the pod) → Service
+`llama-server.llm.svc:8080` (NetworkPolicy: only the interceptor) →
+`llama-server` applies the chat template, processes the prompt (8
+threads), generates (6 threads) in one of 4 slots, returns OpenAI-format
+JSON (or a stream) with token counts and timings. The server cannot open
+any connection out.
 
-**Metrics and logs (Week 4).** Prometheus scrapes `/metrics` on 8080 (allowed
-by the NetworkPolicy); Alloy ships the pod's logs to Loki.
+**Metrics and logs.** Prometheus scrapes `/metrics` on 8080 (allowed by
+the NetworkPolicy); Alloy ships the pods' logs to Loki, without prompt
+content.
 
 **Trust.** One cosign key (platform-lab's lab key, public half in
 `pki/cosign.pub` there) signs the runtime and the model; Kyverno checks it
@@ -206,12 +237,17 @@ flowchart TB
     zot[("Zot<br/>runtime + model + signatures")]
     argo["Argo CD"]
     adm["Admission<br/>Pod Security restricted → Kyverno policies → signature check<br/>(containers and image volumes)"]
+    subgraph kedans["namespace keda"]
+      icp["KEDA HTTP interceptor<br/>counts requests, holds them during a cold start"]
+      keda["KEDA + add-on scaler"]
+    end
     subgraph llm["namespace llm: default-deny NetworkPolicy, no egress"]
-      pod["llama-server pod<br/>model mounted read-only from the image volume"]
+      api["llm-api :8080<br/>ExternalName to the interceptor"]
+      pod["llama-server pod (0-1)<br/>model mounted read-only from the image volume"]
       svc["Service :8080<br/>OpenAI API, /metrics"]
     end
     client["Client pods<br/>label inference.local-airgap-llm/client"]
-    prom["Prometheus / Grafana (Week 4)"]
+    prom["Prometheus / Grafana / Loki"]
   end
 
   subgraph ag["Airgap VM (egress blocked, Week 5)"]
@@ -227,7 +263,9 @@ flowchart TB
   zot -. "verify signature" .-> adm
   adm --> pod
   zot -- "kubelet pulls by digest" --> pod
-  client --> svc --> pod
+  client --> api --> icp --> svc --> pod
+  icp -. "requests in flight" .-> keda
+  keda -. "scale 0 ↔ 1" .-> pod
   prom -.-> svc
   zot --> zarf -- "signed packages" --> zreg --> pod2
 ```

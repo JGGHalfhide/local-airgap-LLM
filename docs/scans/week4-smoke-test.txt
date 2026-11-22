@@ -1,0 +1,34 @@
+# Week 4 smoke test, 2026-11-22, build-node-01, platform-lab 3db5f3c, this repo d52a56c + Week 4 docs (uncommitted)
+# scripts/smoke-test.sh: through llm-api (KEDA interceptor), server woken from zero
+
+## setup
+namespace/llm-smoke created
+pod/client created
+pod/not-a-client created
+pod/client condition met
+pod/not-a-client condition met
+
+## 1. chat completion from a client pod (via llm-api)
+replicas before: 1
+model: qwen3.5-4b
+answer: Paris
+usage: {'completion_tokens': 134, 'prompt_tokens': 20, 'total_tokens': 154, 'prompt_tokens_details': {'cached_tokens': 0}}
+prompt tok/s: 64.6, generation tok/s: 14.1
+PASS: completion in 9.9s (wall clock, incl. kubectl exec)
+
+## 2. who can reach the endpoint
+PASS: unlabelled pod blocked at llm-api (timeout)
+PASS: client cannot bypass the interceptor (timeout)
+
+## 3. egress from the inference pod
+PASS: inference pod cannot reach https://huggingface.co
+PASS: inference pod cannot reach http://zot.zot.svc:5000/v2/
+PASS: inference pod cannot reach http://10.43.0.10:53
+
+## 4. unsigned model image at admission
+signed:   models/qwen3.5-4b-q4km@sha256:fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61
+unsigned: models/qwen3.5-4b-q4km@sha256:dada2df276da92aa8588d407848a7de5b6423e346360ef1e650f8cc75d01ea7b
+denied the request: Policy verify-platform-images failed: image is not signed with the platform-lab cosign key (pki/cosign.pub); publish it with `make image`
+PASS: unsigned model rejected: no signature
+
+ALL PASSED
