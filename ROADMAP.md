@@ -39,13 +39,13 @@ Acceptance: model and runtime in Zot, both signed; tampered or unsigned model de
 
 Goal: an OpenAI-compatible endpoint running under the platform's policies.
 
-- [ ] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR. (11/21: decided in ADR 0003, image volume; live mount test still to do.)
-- [ ] Serving layer ADR: plain Deployment + Service vs KServe (InferenceService, its llama.cpp/custom runtime, scale-to-zero) and llm-d. Compare footprint on one small node, airgap packaging (extra images/CRDs in Zarf), fit with Kyverno/restricted PSS, and overlap with KEDA. Option: deploy KServe alongside and serve the same model both ways for a measured comparison.
-- [ ] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo)
-- [ ] Restricted Pod Security, sized requests/limits, labels, no Secrets in env: passes platform-lab's Kyverno policies as-is, or scoped exceptions documented
-- [ ] Kyverno: model artifact signature verified at admission (extend verify-platform-images, or a new policy in platform-lab)
-- [ ] NetworkPolicy: no egress from the inference pods; ingress only from allowed clients
-- [ ] Smoke test: chat completion through the API; unsigned model rejected
+- [x] How the pod gets the model: Kubernetes image volume (stable since Kubernetes 1.36, needs containerd 2.1+; RKE2 v1.36.5 ships containerd 2.3.4, so it should work) vs init container pulling the artifact into an emptyDir/PVC. ADR. (11/21: decided in ADR 0003, image volume. 11/22: live in the Deployment, model loaded in 4 s from the mount.)
+- [x] Serving layer ADR: plain Deployment + Service vs KServe (InferenceService, its llama.cpp/custom runtime, scale-to-zero) and llm-d. Compare footprint on one small node, airgap packaging (extra images/CRDs in Zarf), fit with Kyverno/restricted PSS, and overlap with KEDA. Option: deploy KServe alongside and serve the same model both ways for a measured comparison. (11/22: ADR 0004, plain Deployment + Service; KServe Standard mode needs cert-manager + a gateway and has no scale from zero, llm-d's CPU path needs 64 cores; measured comparison skipped, reasons in the ADR.)
+- [ ] llama.cpp server Deployment + Service via Argo CD (platform-lab root app gets an Application pointing at this repo) (11/22: deploy/ applied by hand and tested; platform-lab gitops/apps/local-airgap-llm.yaml written, Argo CD sync after both repos are pushed.)
+- [x] Restricted Pod Security, sized requests/limits, labels, no Secrets in env: passes platform-lab's Kyverno policies as-is, or scoped exceptions documented (11/22: passes as-is, no exceptions.)
+- [x] Kyverno: model artifact signature verified at admission (extend verify-platform-images, or a new policy in platform-lab) (11/21, platform-lab 250acd1: verify-platform-images covers image volumes.)
+- [x] NetworkPolicy: no egress from the inference pods; ingress only from allowed clients (11/22: default deny; ingress from pods and namespaces labelled inference.local-airgap-llm/client=true, and Prometheus.)
+- [x] Smoke test: chat completion through the API; unsigned model rejected (11/22: `make smoke`, docs/scans/week3-smoke-test.txt.)
 - [ ] Tag v0.3
 
 Acceptance: a completion from the in-cluster endpoint; an unsigned model is rejected at admission.
@@ -90,6 +90,8 @@ Goal: numbers and a repo a stranger can follow.
 Acceptance: a fresh clone of both repos reproduces the endpoint on both clusters.
 
 ## Open questions
+
+- Qwen3.5 thinks before answering by default (134 completion tokens for a one-word answer in the smoke test). Turn thinking off per request (`chat_template_kwargs`) or server-wide for agent use? Measure the latency cost in Week 4/6.
 
 - VM sizing: how much RAM can the airgap target get while the build VM runs? Do both need to run at once (only for packaging/transfer)?
 - ~~Image volumes vs init container for the model.~~ Answered 11/21 (ADR 0003): Kyverno 1.19 verifies image volumes only through a custom extractor; platform-lab's image policies now include them.

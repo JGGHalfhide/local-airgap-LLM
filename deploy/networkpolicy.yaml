@@ -1,0 +1,42 @@
+# The inference pods make no outbound connections at all: the model comes
+# from the image volume (pulled by the kubelet, not the pod) and the server
+# needs no DNS. Inbound only from pods that are marked as clients, in
+# namespaces that are marked as clients (both labels required), and from
+# Prometheus for /metrics (Week 4).
+#
+# Client label, on the namespace and the pod:
+#   inference.local-airgap-llm/client: "true"
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llama-server-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: llama-server
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              inference.local-airgap-llm/client: "true"
+          podSelector:
+            matchLabels:
+              inference.local-airgap-llm/client: "true"
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080

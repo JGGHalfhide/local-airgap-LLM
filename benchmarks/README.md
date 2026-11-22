@@ -92,6 +92,9 @@ Kyverno. VM: 8 vCPU (host-passthrough), 12 GiB, full platform stack running
   8 threads gives the best prompt processing.
 - `llama-server` sets these separately (`--threads` for generation,
   `--threads-batch` for prompt processing), so the pod starts with
-  `-t 6 -tb 8`; to be confirmed from the server's own timings in Week 3.
+  `-t 6 -tb 8`. Confirmed from the server's own timings (11/22, the
+  Week 3 Deployment, 3 requests with an 807-token prompt and 128 generated
+  tokens, prompt cache off): prompt 119-126 tok/s (pp512 at 8 threads:
+  120.7), generation 14.0-14.7 tok/s (tg128 at 6 threads: 15.0).
 - The remaining ~10% at 4-6 threads is the VM itself (memory
   virtualization); huge pages for the guest are a possible later tweak.

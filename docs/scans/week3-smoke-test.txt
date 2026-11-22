@@ -1,0 +1,32 @@
+# Week 3 smoke test, 2026-11-22, build-node-01, platform-lab 153b4e9, this repo 577ff34 + deploy/ (uncommitted)
+# scripts/smoke-test.sh
+
+## setup
+namespace/llm-smoke created
+pod/client created
+pod/not-a-client created
+pod/client condition met
+pod/not-a-client condition met
+
+## 1. chat completion from a client pod
+model: qwen3.5-4b
+answer: Paris
+usage: {'completion_tokens': 134, 'prompt_tokens': 20, 'total_tokens': 154, 'prompt_tokens_details': {'cached_tokens': 16}}
+prompt tok/s: 22.6, generation tok/s: 14.7
+PASS: completion in 9.3s (wall clock, incl. kubectl exec)
+
+## 2. pod without the client label
+PASS: unlabelled pod blocked (timeout)
+
+## 3. egress from the inference pod
+PASS: inference pod cannot reach https://huggingface.co
+PASS: inference pod cannot reach http://zot.zot.svc:5000/v2/
+PASS: inference pod cannot reach http://10.43.0.10:53
+
+## 4. unsigned model image at admission
+signed:   models/qwen3.5-4b-q4km@sha256:fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61
+unsigned: models/qwen3.5-4b-q4km@sha256:dada2df276da92aa8588d407848a7de5b6423e346360ef1e650f8cc75d01ea7b
+denied the request: Policy verify-platform-images failed: image is not signed with the platform-lab cosign key (pki/cosign.pub); publish it with `make image`
+PASS: unsigned model rejected: no signature
+
+ALL PASSED

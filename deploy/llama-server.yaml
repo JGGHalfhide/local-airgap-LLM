@@ -1,0 +1,120 @@
+# llama-server (ADR 0001) serving Qwen3.5 4B Q4_K_M (ADR 0002), the model
+# mounted read-only from its signed OCI image (ADR 0003). OpenAI-compatible
+# API and Prometheus metrics on port 8080.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-server
+  labels:
+    app.kubernetes.io/name: llama-server
+spec:
+  replicas: 1
+  # One replica on one node: a second copy would not fit next to the first
+  # during a rolling update, so stop the old pod before starting the new one.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-server
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: llama-server
+          # ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d (llama.cpp
+          # v1.0.0, commit b1b770d9), published and signed by make image.
+          image: 127.0.0.1:30500/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
+          # llama-server v1.0 does not take --flag=value: flag and value
+          # are separate arguments.
+          args:
+            - --model
+            - /models/Qwen3.5-4B-Q4_K_M.gguf
+            - --alias
+            - qwen3.5-4b
+            - --jinja
+            # No mmap: peak memory 3.9 GiB instead of 5.1 at 8k context
+            # (benchmarks/README.md).
+            - --load-mode
+            - none
+            - --ctx-size
+            - "8192"
+            # 6 threads for generation, 8 for prompt processing: best
+            # results of the in-cluster benchmark on 8 vCPU.
+            - --threads
+            - "6"
+            - --threads-batch
+            - "8"
+            - --metrics
+            - --no-webui
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+          # /health answers 503 while the model loads, 200 once ready.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "4"
+              memory: 4Gi
+            limits:
+              memory: 5Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: model
+              mountPath: /models
+              readOnly: true
+      volumes:
+        - name: model
+          # models/qwen3.5-4b-q4km:hf-8d43d974efc4, built and signed by
+          # make model (docs/model-image.md).
+          image:
+            reference: 127.0.0.1:30500/models/qwen3.5-4b-q4km@sha256:fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61
+            pullPolicy: IfNotPresent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-server
+  labels:
+    app.kubernetes.io/name: llama-server
+spec:
+  selector:
+    app.kubernetes.io/name: llama-server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
