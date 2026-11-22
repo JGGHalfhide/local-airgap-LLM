@@ -1,0 +1,16 @@
+# Model image admission test, 2026-11-22T04:05:24Z
+# Signed: models/qwen3.5-4b-q4km@sha256:fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61
+# Tampered: same image, one annotation changed (crane mutate), not signed: sha256:7e3d7aa86b339cf4968c2f8662a9ddddca345fa20b7356919aa555e259e63e21
+
+## cosign verify, tampered digest
+error during command execution: no signatures found
+
+## tampered-model
+Error from server: error when creating "tampered.yaml": admission webhook "ivpol.validate.kyverno.svc-fail" denied the request: Policy verify-platform-images failed: image is not signed with the platform-lab cosign key (pki/cosign.pub); publish it with `make image`
+
+## signed-model
+pod/signed-model created
+total 2961028
+-r--r--r--    1 root     root     3032091584 Jan  1  1970 Qwen3.5-4B-Q4_K_M.gguf
+217002fa8008ef4fc6d548353a3aebef055a96e6ff8e0e2c0953ef8254a89c14  /model/Qwen3.5-4B-Q4_K_M.gguf
+pinned SHA-256: 217002fa8008ef4fc6d548353a3aebef055a96e6ff8e0e2c0953ef8254a89c14

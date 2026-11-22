@@ -8,7 +8,7 @@ cluster with no internet.
 
 [![ci](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml)
 
-**Status:** Week 1 of 6 (model choice by benchmark). See [ROADMAP.md](ROADMAP.md).
+**Status:** Week 2 of 6 (the model as a signed OCI image: [docs/model-image.md](docs/model-image.md)). See [ROADMAP.md](ROADMAP.md).
 
 ## How it fits with platform-lab
 

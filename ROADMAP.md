@@ -26,11 +26,11 @@ Acceptance: both VMs sized and documented; a model chosen with numbers behind it
 
 Goal: the model is a signed, verifiable artifact in Zot, like the images.
 
-- [ ] Model as an OCI artifact in Zot (ORAS, or an OCI image wrapping the GGUF for image volumes; decide which, ADR) (11/21: ADR 0003, OCI image + image volume; platform-lab policies now cover image volumes.)
-- [ ] Provenance recorded with it: source URL, license, upstream SHA-256, quantization
-- [ ] Sign with the lab cosign key (same flags as platform-lab: no Rekor); attach a provenance/SBOM-style attestation
+- [x] Model as an OCI artifact in Zot (ORAS, or an OCI image wrapping the GGUF for image volumes; decide which, ADR) (11/21: ADR 0003, OCI image + image volume; platform-lab policies now cover image volumes. docs/model-image.md.)
+- [x] Provenance recorded with it: source URL, license, upstream SHA-256, quantization (manifest annotations + SLSA v1 attestation.)
+- [x] Sign with the lab cosign key (same flags as platform-lab: no Rekor); attach a provenance/SBOM-style attestation (tampered copy rejected at admission, docs/scans/model-admission-test.txt.)
 - [x] Runtime image (llama.cpp server) through platform-lab's `make image` (SBOM, Trivy gate, sign) (11/21, during Week 1.)
-- [ ] `make model` (pull, verify checksum, package, push, sign) reusing platform-lab scripts where possible
+- [x] `make model` (pull, verify checksum, package, push, sign) reusing platform-lab scripts where possible (uses platform-lab's scripts/lib.sh.)
 - [ ] Tag v0.2
 
 Acceptance: model and runtime in Zot, both signed; tampered or unsigned model detectable.
