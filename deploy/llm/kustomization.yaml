@@ -11,3 +11,4 @@ resources:
   - llama-server.yaml
   - networkpolicy.yaml
   - servicemonitor.yaml
+  - scaling.yaml

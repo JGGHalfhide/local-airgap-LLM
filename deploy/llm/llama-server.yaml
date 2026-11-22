@@ -8,7 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: llama-server
 spec:
-  replicas: 1
+  # No replicas: KEDA owns the count (scaling.yaml, 0 or 1).
   # One replica on one node: a second copy would not fit next to the first
   # during a rolling update, so stop the old pod before starting the new one.
   strategy:

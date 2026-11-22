@@ -1,0 +1,70 @@
+# Scale to zero and back (ADR 0005): the KEDA HTTP add-on's interceptor
+# (keda namespace, platform-lab) receives client requests, counts them, holds
+# them while llama-server scales from zero, and forwards them to the Service.
+# KEDA scales the Deployment on requests in flight: 0 when idle, 1 when busy
+# (a second 5 GiB replica would not fit on the node).
+#
+# Clients call http://llm-api.llm.svc:8080 (below), not llama-server
+# directly: a request KEDA cannot see could be cut off by a scale-down.
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-api
+  labels:
+    app.kubernetes.io/name: llm-api
+spec:
+  type: ExternalName
+  externalName: keda-add-ons-http-interceptor-proxy.keda.svc.cluster.local
+  ports:
+    - name: http
+      port: 8080
+---
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: llama-server
+  labels:
+    app.kubernetes.io/name: llama-server
+spec:
+  target:
+    service: llama-server
+    port: 8080
+  # The interceptor matches the Host header without its port.
+  rules:
+    - hosts:
+        - llm-api.llm.svc
+        - llm-api.llm.svc.cluster.local
+        - llm-api.llm
+  scalingMetric:
+    # 4 slots per replica.
+    concurrency:
+      targetValue: 4
+  coldStart:
+    # Requests held while the pod starts; more get HTTP 503.
+    maxPendingRequests: 32
+  timeouts:
+    # Cold start is ~6 s with both images cached on the node; a pull of the
+    # 2.8 GiB model image after an eviction takes longer.
+    readiness: 180s
+    # No response-header or total timeout: a non-streamed completion sends
+    # its headers only when it is done, and a 32k-token prompt takes minutes.
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: llama-server
+  labels:
+    app.kubernetes.io/name: llama-server
+spec:
+  scaleTargetRef:
+    name: llama-server
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  # Idle time before scaling to zero.
+  cooldownPeriod: 300
+  pollingInterval: 1
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: llama-server
