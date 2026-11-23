@@ -3,7 +3,8 @@
   Source of docs/images/overview.png (3200x1810). Render:
     scripts/render-overview.sh
   Same layout as platform-lab's platform-overview.png. Numbers are measured
-  results from benchmarks/README.md and docs/scans/; update both together.
+  results from docs/load-test.md, docs/scaling.md and docs/airgap-runbook.md
+  (the README results table); update them together.
 -->
 <html>
 <head>
@@ -132,20 +133,19 @@
     </div>
     <div class="arrow">→</div>
     <div class="card dashed" style="--c: var(--amber)">
-      <div class="tag">WEEK 5</div>
       <div class="num">05 AIRGAP</div>
       <h2>Disconnected deploy</h2>
       <div class="pill">Zarf packages</div>
       <div class="pill">Verified on deploy</div>
       <div class="pill">Egress blocked</div>
-      <div class="pill">Second VM, same host</div>
+      <div class="pill">Smoke 7/7 · 0 pull errors</div>
     </div>
   </div>
 
   <div class="band">
     <div class="label">
       <div class="mono">OBSERVE + SCALE</div>
-      <div>Live on the build cluster</div>
+      <div>Live on both clusters</div>
     </div>
     <div class="pill">Prometheus metrics</div>
     <div class="pill">Grafana dashboard</div>
@@ -156,27 +156,27 @@
 
   <div class="stats">
     <div class="stat" style="--c: var(--blue)">
-      <div class="big">14.5<small>tok/s</small></div>
-      <div class="what">generation, CPU only</div>
-      <div class="how">8-vCPU VM, 4B model, 6 threads</div>
+      <div class="big">14.3<small>tok/s</small></div>
+      <div class="what">one stream, CPU only</div>
+      <div class="how">TTFT 1.9 s, 8-vCPU VM, 4B model</div>
     </div>
     <div class="stat" style="--c: var(--teal)">
-      <div class="big">~120<small>tok/s</small></div>
-      <div class="what">prompt processing</div>
-      <div class="how">807-token prompt, 8 threads</div>
+      <div class="big">18.2<small>tok/s</small></div>
+      <div class="what">4 concurrent requests</div>
+      <div class="how">0 errors, 5.0 GiB peak memory</div>
     </div>
     <div class="stat" style="--c: var(--violet)">
-      <div class="big">4.7<small>GiB</small></div>
-      <div class="what">peak server memory</div>
-      <div class="how">32k context, 4 slots, no mmap</div>
+      <div class="big">0.75<small>kWh</small></div>
+      <div class="what">per million tokens</div>
+      <div class="how">CPU package (RAPL), 4 concurrent</div>
     </div>
     <div class="stat" style="--c: var(--amber)">
-      <div class="big">6.3<small>s</small></div>
+      <div class="big">~6<small>s</small></div>
       <div class="what">cold start from zero</div>
-      <div class="how">request to first byte, KEDA 0 → 1</div>
+      <div class="how">both clusters, KEDA 0 → 1</div>
     </div>
   </div>
 
-  <div class="foot">make model → signed model · git push → served, verified, no egress</div>
+  <div class="foot">make model → signed model · git push → served, verified, no egress · both clusters rebuilt from fresh clones</div>
 </body>
 </html>
