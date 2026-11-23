@@ -14,8 +14,14 @@
 #     models/<name>:unsigned-smoke-test (layers shared, same digest each run)
 #     so the rejection is for the signature, not a missing image.
 #
+# On the airgapped cluster (detected by its zarf namespace) there is no
+# registry to push to: the unsigned copy comes from the llm-smoke Zarf package
+# (zarf/llm-smoke, same digest), and check 3 tries the Zarf registry instead
+# of Zot.
+#
 # Usage: KUBECONFIG=... scripts/smoke-test.sh
-# Needs platform-lab next to this repo (registry login via its lib.sh).
+# Needs platform-lab next to this repo (registry login via its lib.sh; build
+# cluster only).
 # Creates the namespace llm-smoke and deletes it at the end. Exits non-zero
 # if any check fails.
 set -euo pipefail
@@ -27,6 +33,11 @@ alpine=127.0.0.1:30500/library/alpine:3.22@sha256:49340b346798875b5592e5d420241f
 root=$(cd "$(dirname "$0")/.." && pwd)
 PLATFORM_LAB="${PLATFORM_LAB:-$(cd "$root/../platform-lab" && pwd)}"
 source "$PLATFORM_LAB/scripts/lib.sh"   # sets REPO_ROOT to platform-lab
+airgap=false
+kubectl get ns zarf >/dev/null 2>&1 && airgap=true
+registry_svc=http://zot.zot.svc:5000/v2/
+$airgap && registry_svc=http://zarf-docker-registry.zarf.svc:5000/v2/
+echo "cluster: $(kubectl config current-context 2>/dev/null || echo '?'), airgap: $airgap"
 fail=0
 pass() { echo "PASS: $*"; }
 nok() { echo "FAIL: $*"; fail=1; }
@@ -82,6 +93,7 @@ metadata:
     inference.local-airgap-llm/client: "true"
     pod-security.kubernetes.io/enforce: restricted
 EOF
+  "$root/scripts/zarf-pull-secret.sh" "$ns"   # airgapped cluster only
   pod client true
   pod not-a-client false
 } | kubectl apply -f -
@@ -121,7 +133,7 @@ echo "## 3. egress from the inference pod"
 if [ "$(kubectl -n llm get deploy llama-server -o jsonpath='{.status.readyReplicas}')" != 1 ]; then
   nok "no running llama-server pod to test egress from"
 fi
-for target in https://huggingface.co http://zot.zot.svc:5000/v2/ http://10.43.0.10:53; do
+for target in https://huggingface.co "$registry_svc" http://10.43.0.10:53; do
   if kubectl -n llm exec deploy/llama-server -- curl -s -o /dev/null -m 5 "$target" 2>/dev/null; then
     nok "inference pod reached $target"
   else
@@ -134,10 +146,14 @@ echo "## 4. unsigned model image at admission"
 # The model reference in the Deployment: 127.0.0.1:30500/models/<name>@<digest>.
 signed=$(grep -o 'models/[^@]*@sha256:[0-9a-f]*' "$root/deploy/llm/llama-server.yaml")
 repo=${signed%@*}
-registry_env
-unsigned=$(crane mutate "$REGISTRY/$signed" \
-  --annotation io.github.jgghalfhide.local-airgap-llm.smoke-test=unsigned \
-  -t "$REGISTRY/$repo:unsigned-smoke-test" 2>/dev/null)
+if $airgap; then
+  unsigned=$(grep -o "$repo:unsigned-smoke-test@sha256:[0-9a-f]*" "$root/zarf/llm-smoke/zarf.yaml")
+else
+  registry_env
+  unsigned=$(crane mutate "$REGISTRY/$signed" \
+    --annotation io.github.jgghalfhide.local-airgap-llm.smoke-test=unsigned \
+    -t "$REGISTRY/$repo:unsigned-smoke-test" 2>/dev/null)
+fi
 unsigned=${unsigned##*@}
 echo "signed:   $signed"
 echo "unsigned: $repo@$unsigned"

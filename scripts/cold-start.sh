@@ -28,7 +28,8 @@ trap cleanup EXIT
 # A namespace left terminating by a previous run would swallow the new pod.
 kubectl delete ns "$ns" --ignore-not-found --wait=true --timeout=3m >/dev/null
 
-kubectl apply -f - >/dev/null <<EOF
+{
+  cat <<EOF
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -36,6 +37,9 @@ metadata:
   labels:
     inference.local-airgap-llm/client: "true"
     pod-security.kubernetes.io/enforce: restricted
+EOF
+  "$(dirname "$0")/zarf-pull-secret.sh" "$ns"   # airgapped cluster only
+  cat <<EOF
 ---
 apiVersion: v1
 kind: Pod
@@ -66,6 +70,7 @@ spec:
         capabilities:
           drop: ["ALL"]
 EOF
+} | kubectl apply -f - >/dev/null
 kubectl -n "$ns" wait --for=condition=Ready pod/client --timeout=2m >/dev/null
 
 body='{"model":"qwen3.5-4b","stream":true,"max_tokens":16,"temperature":0,"chat_template_kwargs":{"enable_thinking":false},"messages":[{"role":"user","content":"Say hello in one word."}]}'

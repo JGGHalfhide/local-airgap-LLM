@@ -1,0 +1,53 @@
+# The inference endpoint for the airgapped cluster (Week 5): the same
+# manifests Argo CD syncs on the build cluster (deploy/), the runtime and
+# model images from the build cluster's registry, and their cosign
+# signatures (.sig) and attestations (.att: SBOM for the runtime, SLSA
+# provenance for the model). Zarf does not pick up cosign's tag-based
+# artifacts on its own, so they are listed; Kyverno verifies the .sig of
+# both after the Zarf agent rewrites the references (the model is an image
+# volume, which the agent rewrites too). docs/airgap-runbook.md.
+#
+# Needs platform-lab's monitoring (ServiceMonitor CRD, Grafana sidecar) and
+# keda (ScaledObject, InterceptorRoute) packages first. Built and signed with
+# platform-lab's scripts/airgap-packages.sh (make airgap-packages).
+kind: ZarfPackageConfig
+metadata:
+  name: llm
+  description: llama-server with Qwen3.5 4B Q4_K_M, KEDA scaling, dashboard
+  version: 0.5.0
+  architecture: amd64
+
+components:
+  - name: llm
+    required: true
+    manifests:
+      # Namespace llm (namespace.yaml carries its Pod Security labels).
+      - name: llm
+        kustomizations:
+          - ../../deploy/llm
+      # Dashboard ConfigMap in the monitoring namespace.
+      - name: llm-dashboard
+        kustomizations:
+          - ../../deploy/monitoring
+    # The digests in deploy/llm/llama-server.yaml. The runtime is signed by
+    # its index digest (all platforms, as published by make image), so every
+    # platform's layers come along.
+    images:
+      - registry.platform-lab.internal/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
+      - registry.platform-lab.internal/ggml-org/llama.cpp:sha256-e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375.sig
+      - registry.platform-lab.internal/ggml-org/llama.cpp:sha256-e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375.att
+      - registry.platform-lab.internal/models/qwen3.5-4b-q4km:hf-8d43d974efc4@sha256:fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61
+      - registry.platform-lab.internal/models/qwen3.5-4b-q4km:sha256-fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61.sig
+      - registry.platform-lab.internal/models/qwen3.5-4b-q4km:sha256-fb1e513b3791251de054a3f1682f9b5d58751664a1cdfbc451185abfb235bd61.att
+    actions:
+      onDeploy:
+        after:
+          # KEDA owns the replica count (0 when idle), so wait for the
+          # ScaledObject, not for a pod.
+          - description: ScaledObject ready
+            wait:
+              cluster:
+                kind: ScaledObject
+                name: llama-server
+                namespace: llm
+                condition: Ready

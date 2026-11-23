@@ -1,0 +1,25 @@
+# Test images for scripts/smoke-test.sh on the airgapped cluster (no
+# registry to push to there):
+# - the signed alpine image its client pods run (platform-lab `make image`),
+# - the unsigned copy of the model image that the smoke test makes on the
+#   build cluster (`crane mutate`, one annotation added: new digest, no
+#   signature, same layers). The package carries its 2.8 GiB layer again
+#   (packages do not share blobs), but the Zarf registry stores it once.
+#   The smoke test expects it to be rejected at admission; it is in the
+#   registry so that the rejection is for the signature alone.
+# The package itself is signed like the others. Run make smoke on the build
+# cluster first so that the unsigned copy exists.
+kind: ZarfPackageConfig
+metadata:
+  name: llm-smoke
+  description: Smoke test images (client pod image, unsigned model copy)
+  version: 0.5.0
+  architecture: amd64
+
+components:
+  - name: llm-smoke
+    required: true
+    images:
+      - registry.platform-lab.internal/library/alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+      - registry.platform-lab.internal/library/alpine:sha256-49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f.sig
+      - registry.platform-lab.internal/models/qwen3.5-4b-q4km:unsigned-smoke-test@sha256:dada2df276da92aa8588d407848a7de5b6423e346360ef1e650f8cc75d01ea7b
