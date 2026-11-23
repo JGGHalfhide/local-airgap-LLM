@@ -84,8 +84,25 @@ Standing preferences for the notes (user, 11/20):
   (short summary as the body, piped on stdin).
 
 ## Current status
-11/21: public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Host
-benchmarks done, model and runtime chosen, resource plan proposed. Next: the
-platform-lab VM resize (docs/resource-plan.md), in-VM benchmark, tag v0.1.
+Public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Weeks 1-5 done,
+tagged v0.1-v0.5 (v0.5 on 11/22):
+- Weeks 1-2: model (ADR 0002) and runtime (ADR 0001) chosen by benchmark;
+  model as a signed OCI image (ADR 0003, `make model`), VMs 8 vCPU / 16 GiB,
+  run one at a time.
+- Week 3: plain Deployment + Service (ADR 0004) via Argo CD, image volume,
+  restricted PSS, no egress, `make smoke`.
+- Week 4: ServiceMonitor + generated dashboard (`make dashboard`), KEDA HTTP
+  add-on scale to zero (ADR 0005), cold start ~6 s (docs/scaling.md).
+- Week 5: Zarf packages zarf/llm + zarf/llm-smoke (`make airgap-packages`,
+  `make airgap-deploy` via platform-lab's script and zarf role; KEDA package
+  and the airgap policy's image-volume fix in platform-lab 8a23657).
+  Airgap VM: smoke 7/7, 0 pull errors, cold start 5.9-6.8 s
+  (docs/airgap-runbook.md). Test scripts copy Zarf's private-registry Secret
+  into their namespaces (scripts/zarf-pull-secret.sh).
+Next: Week 6 (load test, cost per million tokens, README results, full
+rebuild of both clusters, v1.0). Lab powered down; the airgap VM was left
+with egress blocked.
+Long steps (package builds, airgap-up/deploy, cold start): run detached
+(setsid nohup, logs in build/); session cut-offs kill background jobs.
 Phase 3 (airgapped agents on Kubernetes) will be a separate repo.
 See ROADMAP.md for the checklist.
