@@ -114,7 +114,7 @@ Q4_K_M.
 
 | Component | Version | What it does here | Why |
 |---|---|---|---|
-| `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected. Detects the airgapped cluster (its `zarf` namespace) and uses the Zarf registry and the llm-smoke package there | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt), [airgap-runbook.md](airgap-runbook.md)) |
+| `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected; no thinking unless asked (ADR 0006). Detects the airgapped cluster (its `zarf` namespace) and uses the Zarf registry and the llm-smoke package there | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt), [airgap-runbook.md](airgap-runbook.md)) |
 | `scripts/cold-start.sh` | | Waits for zero replicas, then times a streamed request from a client pod and reads the pod's timeline | Cold start from zero, client side ([scaling.md](scaling.md)) |
 | `make load-test` (`scripts/load-test.py`) | | Streamed requests at concurrency 1/2/4/8 through the interceptor: TTFT, p50/p95 latency, tokens/s, errors, and CPU package energy from RAPL | Throughput and energy per token, Python stdlib only ([load-test.md](load-test.md)) |
 | RAPL (Linux powercap) | `/sys/class/powercap/intel-rapl:0` | CPU package energy counter on the host, read with `sudo` before and after each load level | Measured energy per token without a wall meter; a lower bound (no DRAM, SSD or PSU losses) |
@@ -181,9 +181,10 @@ while requests are in flight and for the cooldown after. Cold start:
 
 ### 6. Verify: `make smoke`
 
-Completion through `llm-api`, NetworkPolicy (unlabelled pod blocked, no
-bypass of the interceptor, no egress), and an unsigned copy of the model
-image rejected at admission (server-side dry run).
+Completion through `llm-api` (with no thinking unless the request asks for
+it), NetworkPolicy (unlabelled pod blocked, no bypass of the interceptor,
+no egress), and an unsigned copy of the model image rejected at admission
+(server-side dry run).
 
 ### 7. Airgap (Week 5)
 

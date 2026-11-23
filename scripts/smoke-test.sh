@@ -140,15 +140,16 @@ echo "## 3. egress from the inference pod"
 # Needs a running pod (check 1 woke it; KEDA keeps it 5 min): without one,
 # kubectl exec fails and would look like a blocked connection.
 if [ "$(kubectl -n llm get deploy llama-server -o jsonpath='{.status.readyReplicas}')" != 1 ]; then
-  nok "no running llama-server pod to test egress from"
+  nok "no running llama-server pod to test egress from (egress probes skipped)"
+else
+  for target in https://huggingface.co "$registry_svc" http://10.43.0.10:53; do
+    if kubectl -n llm exec deploy/llama-server -- curl -s -o /dev/null -m 5 "$target" 2>/dev/null; then
+      nok "inference pod reached $target"
+    else
+      pass "inference pod cannot reach $target"
+    fi
+  done
 fi
-for target in https://huggingface.co "$registry_svc" http://10.43.0.10:53; do
-  if kubectl -n llm exec deploy/llama-server -- curl -s -o /dev/null -m 5 "$target" 2>/dev/null; then
-    nok "inference pod reached $target"
-  else
-    pass "inference pod cannot reach $target"
-  fi
-done
 
 echo
 echo "## 4. unsigned model image at admission"

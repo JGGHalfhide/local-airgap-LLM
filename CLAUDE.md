@@ -88,7 +88,7 @@ Standing preferences for the notes (user, 11/20):
 
 ## Current status
 Public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Weeks 1-6 done,
-tagged v0.1-v0.5 and v1.0 (11/23):
+tagged v0.1-v0.5, v1.0 and v1.1 (11/23). Phase 2 complete:
 - Weeks 1-2: model (ADR 0002) and runtime (ADR 0001) chosen by benchmark;
   model as a signed OCI image (ADR 0003, `make model`), VMs 8 vCPU / 16 GiB,
   run one at a time.
@@ -108,8 +108,15 @@ tagged v0.1-v0.5 and v1.0 (11/23):
   Full rebuild of both clusters from fresh clones (docs/scans/week6-rebuild.txt);
   quickstarts publish every image by tag@digest; platform-lab lib.sh exit
   status fix.
-Next: Phase 3. The working platform-lab has the rebuilt clusters' state;
-airgap VM running with egress blocked, build VM off (one VM at a time).
+- v1.1: thinking off by default, opt-in with a 1024-token budget (ADR 0006,
+  benchmarks/README.md "Thinking"); verified on both clusters (smoke 8/8,
+  incl. "no thinking by default"). The airgap VM was recreated: an
+  interrupted `zarf init` cannot be re-run under the Kyverno policies (open
+  in platform-lab). After a VM boot, wait for etcd/kube-apiserver and KEDA
+  to settle before deploying or testing (docs/airgap-runbook.md,
+  docs/scaling.md).
+Next: Phase 3 (separate repo). Both VMs powered down 11/23; the working
+platform-lab holds both clusters' Terraform state and kubeconfigs.
 Long steps (package builds, airgap-up/deploy, cold start): run detached
 (setsid nohup, logs in build/); session cut-offs kill background jobs.
 Phase 3 (airgapped agents on Kubernetes) will be a separate repo.

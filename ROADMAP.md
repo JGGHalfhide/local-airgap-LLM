@@ -95,8 +95,8 @@ Goal: the server's default matches what was measured and cannot hang a slot.
 
 - [x] Measure thinking on vs off, server-wide switches, budgets (11/23: `scripts/thinking-check.py`, `toolcall-check.py --thinking`; benchmarks/README.md. Thinking fixed 3/3 multi-step errors but looped to 8k tokens with no answer on 3/3 open-ended triage questions; budget 1024: 10/10 answered, 9/10 right.)
 - [x] ADR 0006: `--reasoning off --reasoning-budget 1024` in deploy/; smoke test checks no thinking by default; zarf/llm 0.6.0
-- [ ] Deployed and smoke-tested on the build cluster and the airgapped cluster
-- [ ] Tag v1.1
+- [x] Deployed and smoke-tested on the build cluster and the airgapped cluster (11/23: build cluster via Argo CD, smoke 8/8, "Paris" in 2 tokens with no reasoning. Airgap: zarf/llm 0.6.0 on a recreated airgap VM, smoke 8/8, 0 pull errors. On the way: smoke-test egress probes no longer pass without a pod; a KEDA operator restart scales to zero at once (docs/scaling.md); platform-lab's zarf role no longer reads a failed record read as "not deployed"; an interrupted `zarf init` cannot be re-run under the policies, open in platform-lab.)
+- [x] Tag v1.1
 
 ## Open questions
 

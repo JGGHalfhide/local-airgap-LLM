@@ -64,8 +64,22 @@ warm. Images cached on the node. Raw output:
 - Scale-down: in every run KEDA returned the server to zero 5 minutes after
   the last request (operator log: scaled up 18:44:30, down 18:49:37).
 
-Not measured yet: a cold start with the model image evicted from the node
-(the pull from Zot adds the 2.8 GiB transfer), and behaviour under load
-(Week 6). The startup probe period (5 s) sets the granularity of the ready
-time; a 1-2 s period could cut up to ~4 s from the cold start at the cost
+Under load (Week 6): [load-test.md](load-test.md). Not measured: a cold
+start with the model image evicted from the node (the pull from Zot adds
+the 2.8 GiB transfer). The startup probe period (5 s) sets the granularity
+of the ready time; a 1-2 s period could cut up to ~4 s from the cold start at the cost
 of more probe traffic.
+
+## Limitation: a KEDA operator restart scales to zero at once (11/23)
+
+When the KEDA operator starts, it initialises each ScaledObject with no
+record of recent activity, and sets the target to `minReplicaCount`
+straight away, without waiting for the cooldown. Seen after a VM boot:
+the operator crash-restarted twice while the API server came up, started
+at 19:11:39, and scaled `llama-server` from 1 to 0 ten seconds after it had
+served a request ("Successfully set ScaleTarget replicas count to
+ScaledObject minReplicaCount", Original Replicas Count 1). A request in
+flight at that moment would be cut off; the next one waits for a cold
+start. Rare in steady state (the operator only restarts on node or
+platform trouble), but tests run straight after a boot should wait for the
+`keda` namespace to settle first.

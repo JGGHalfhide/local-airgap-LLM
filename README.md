@@ -8,10 +8,12 @@ cluster with no internet.
 
 [![ci](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml)
 
-**Status:** v1.0 (11/23): endpoint on the build cluster and the airgapped
+**Status:** v1.1 (11/23): endpoint on the build cluster and the airgapped
 VM, scale to zero (cold start ~6 s), load-tested (18 tokens/s at 4
-concurrent requests, 0.75 kWh per million output tokens), and both clusters
-rebuilt from fresh clones ([scans/week6-rebuild.txt](docs/scans/week6-rebuild.txt)).
+concurrent requests, 0.75 kWh per million output tokens), both clusters
+rebuilt from fresh clones ([scans/week6-rebuild.txt](docs/scans/week6-rebuild.txt)),
+and Qwen3.5's thinking off unless a request opts in
+([ADR 0006](docs/adr/0006-thinking-off-by-default.md)).
 See [ROADMAP.md](ROADMAP.md).
 
 ## Architecture

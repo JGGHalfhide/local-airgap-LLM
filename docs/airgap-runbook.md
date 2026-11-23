@@ -91,6 +91,14 @@ sample-app, monitoring, keda, llm, llm-smoke, each verified against the lab
 key. Packages already deployed with the same checksum and build time are
 skipped, so a second run reports `changed=0`.
 
+Right after `make airgap-up` or a VM boot, wait for the cluster to settle
+first: etcd and the API server restart a few times while RKE2 comes up. On
+11/23 a deploy started 2.5 minutes after a boot hit `connection reset by
+peer` during `zarf init`, and the interrupted init could not be re-run
+(Kyverno denies the Zarf injector once the policies are in place); the fix
+was a fresh airgap VM. Details and the open question: platform-lab
+`docs/airgap-runbook.md`, section 5.
+
 ### 5. Verify
 
 ```bash
