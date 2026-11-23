@@ -50,6 +50,13 @@ spec:
             # request can use all of it (docs/resource-plan.md).
             - --ctx-size
             - "32768"
+            # No RAM prompt cache. It saves the state of every prompt that
+            # leaves a slot, up to 8 GiB by default: under load (4 slots,
+            # unique prompts) the pod passed its 6 GiB limit and was
+            # OOMKilled. Off, peak is 5.0 GiB. Each slot still reuses its
+            # own KV prefix (docs/load-test.md).
+            - --cache-ram
+            - "0"
             # 6 threads for generation, 8 for prompt processing: best
             # results of the in-cluster benchmark on 8 vCPU.
             - --threads
