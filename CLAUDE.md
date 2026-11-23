@@ -39,6 +39,9 @@ platform-lab provides the clusters; this repo provides the workload.
   Apache-2.0. Fallback: Granite 4.2 3B Q4_K_M.
 - Runtime (11/21, ADR 0001): llama.cpp llama-server v1.0.0, CPU build,
   --jinja --load-mode none (v1.0 renamed --no-mmap). Benchmarks in benchmarks/.
+- Thinking (11/23, ADR 0006): off server-wide (--reasoning off), opt-in per
+  request with chat_template_kwargs, --reasoning-budget 1024. When agents
+  opt in is a Phase 3 question.
 - Airgap target: second VM, not the iMac.
 - Separate repo from platform-lab.
 

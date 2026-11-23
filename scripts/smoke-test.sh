@@ -3,7 +3,8 @@
 #
 #  1. A chat completion from a labelled client pod through llm-api (the KEDA
 #     HTTP add-on's interceptor), which also wakes the server if KEDA has
-#     scaled it to zero; the time includes that cold start.
+#     scaled it to zero; the time includes that cold start. The request
+#     does not mention thinking: the server's default must be off (ADR 0006).
 #  2. A pod without the client label cannot reach llm-api, and a labelled
 #     client cannot bypass the interceptor to reach llama-server directly.
 #  3. The inference pod has no egress (DNS, internet, other pods).
@@ -114,6 +115,11 @@ if echo "$resp" | python3 -c 'import json,sys; r=json.load(sys.stdin); c=r["choi
   pass "completion in ${secs}s (wall clock, incl. kubectl exec)"
 else
   nok "no valid completion: ${resp:0:300}"
+fi
+if echo "$resp" | python3 -c 'import json,sys; m=json.load(sys.stdin)["choices"][0]["message"]; sys.exit(1 if m.get("reasoning_content") else 0)' 2>/dev/null; then
+  pass "no thinking by default (no reasoning_content)"
+else
+  nok "the server thought without being asked (ADR 0006: --reasoning off)"
 fi
 
 echo

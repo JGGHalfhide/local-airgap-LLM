@@ -57,6 +57,15 @@ spec:
             # own KV prefix (docs/load-test.md).
             - --cache-ram
             - "0"
+            # Thinking off unless a request opts in with
+            # chat_template_kwargs {"enable_thinking": true}, and then at most
+            # 1024 thinking tokens (ADR 0006). Qwen3.5 thinks by default:
+            # 15-45 s per short answer here, and open-ended questions looped
+            # for 8k tokens (10 min) with no answer.
+            - --reasoning
+            - "off"
+            - --reasoning-budget
+            - "1024"
             # 6 threads for generation, 8 for prompt processing: best
             # results of the in-cluster benchmark on 8 vCPU.
             - --threads

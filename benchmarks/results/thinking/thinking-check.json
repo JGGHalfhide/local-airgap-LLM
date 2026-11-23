@@ -1,0 +1,341 @@
+{
+  "model": "Qwen3.5-4B-Q4_K_M.gguf",
+  "flags": [
+    "--jinja",
+    "--load-mode",
+    "none",
+    "--cache-ram",
+    "0",
+    "--ctx-size",
+    "32768",
+    "--threads",
+    "6",
+    "--threads-batch",
+    "8"
+  ],
+  "per_request": [
+    {
+      "case": "fact",
+      "off": {
+        "seconds": 0.31,
+        "completion_tokens": 2,
+        "reasoning_chars": 0,
+        "answer": "Paris",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 9.54,
+        "completion_tokens": 151,
+        "reasoning_chars": 470,
+        "answer": "Paris",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "default": {
+        "seconds": 9.48,
+        "completion_tokens": 151,
+        "reasoning_chars": 470,
+        "answer": "Paris",
+        "finish_reason": "stop"
+      }
+    },
+    {
+      "case": "count_letters",
+      "off": {
+        "seconds": 0.41,
+        "completion_tokens": 2,
+        "reasoning_chars": 0,
+        "answer": "2",
+        "finish_reason": "stop",
+        "correct": false
+      },
+      "on": {
+        "seconds": 25.48,
+        "completion_tokens": 401,
+        "reasoning_chars": 950,
+        "answer": "3",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "memory_left",
+      "off": {
+        "seconds": 0.77,
+        "completion_tokens": 4,
+        "reasoning_chars": 0,
+        "answer": "3.5",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 28.26,
+        "completion_tokens": 445,
+        "reasoning_chars": 1228,
+        "answer": "3.5",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "request_time",
+      "off": {
+        "seconds": 0.71,
+        "completion_tokens": 4,
+        "reasoning_chars": 0,
+        "answer": "2.9",
+        "finish_reason": "stop",
+        "correct": false
+      },
+      "on": {
+        "seconds": 34.93,
+        "completion_tokens": 547,
+        "reasoning_chars": 1433,
+        "answer": "11.1",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "startup_chain",
+      "off": {
+        "seconds": 0.71,
+        "completion_tokens": 3,
+        "reasoning_chars": 0,
+        "answer": "10",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 30.3,
+        "completion_tokens": 480,
+        "reasoning_chars": 1457,
+        "answer": "10",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "replicas",
+      "off": {
+        "seconds": 0.53,
+        "completion_tokens": 2,
+        "reasoning_chars": 0,
+        "answer": "2",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 15.47,
+        "completion_tokens": 245,
+        "reasoning_chars": 699,
+        "answer": "2",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "slots_queue",
+      "off": {
+        "seconds": 0.67,
+        "completion_tokens": 3,
+        "reasoning_chars": 0,
+        "answer": "80",
+        "finish_reason": "stop",
+        "correct": false
+      },
+      "on": {
+        "seconds": 43.67,
+        "completion_tokens": 685,
+        "reasoning_chars": 2019,
+        "answer": "60",
+        "finish_reason": "stop",
+        "correct": true
+      }
+    },
+    {
+      "case": "triage_oom",
+      "off": {
+        "seconds": 2.8,
+        "completion_tokens": 37,
+        "reasoning_chars": 0,
+        "answer": "The pod is most likely being killed by the Kubernetes OOMKiller because the application is consuming more memory than the 6Gi limit allows, causing it to be terminated repeatedly.",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 611.7,
+        "completion_tokens": 8192,
+        "reasoning_chars": 32814,
+        "answer": "",
+        "finish_reason": "length",
+        "correct": false
+      }
+    },
+    {
+      "case": "triage_pull",
+      "off": {
+        "seconds": 5.32,
+        "completion_tokens": 72,
+        "reasoning_chars": 0,
+        "answer": "The most likely cause is that the Pod's imagePullPolicy is set to `IfNotPresent` (or `Never`), causing it to attempt a local pull from the host's Docker daemon (127.0.0.1) instead of the remote registry, which fails because the local container runtime does not have the specific image cached.",
+        "finish_reason": "stop",
+        "correct": false
+      },
+      "on": {
+        "seconds": 613.46,
+        "completion_tokens": 8192,
+        "reasoning_chars": 29963,
+        "answer": "",
+        "finish_reason": "length",
+        "correct": false
+      }
+    },
+    {
+      "case": "triage_policy",
+      "off": {
+        "seconds": 2.57,
+        "completion_tokens": 34,
+        "reasoning_chars": 0,
+        "answer": "The operator should re-sign the container image using the `platform-lab` cosign key and push the updated image to the registry before redeploying the pod.",
+        "finish_reason": "stop",
+        "correct": true
+      },
+      "on": {
+        "seconds": 610.78,
+        "completion_tokens": 8192,
+        "reasoning_chars": 32877,
+        "answer": "",
+        "finish_reason": "length",
+        "correct": false
+      }
+    }
+  ],
+  "server_off": {
+    "reasoning-off": {
+      "default": {
+        "seconds": 0.67,
+        "completion_tokens": 3,
+        "reasoning_chars": 0,
+        "answer": "80",
+        "finish_reason": "stop"
+      },
+      "request_on": {
+        "seconds": 43.35,
+        "completion_tokens": 685,
+        "reasoning_chars": 2019,
+        "answer": "60",
+        "finish_reason": "stop"
+      }
+    },
+    "template-kwargs-off": {
+      "default": {
+        "seconds": 0.67,
+        "completion_tokens": 3,
+        "reasoning_chars": 0,
+        "answer": "80",
+        "finish_reason": "stop"
+      },
+      "request_on": {
+        "seconds": 43.51,
+        "completion_tokens": 685,
+        "reasoning_chars": 2019,
+        "answer": "60",
+        "finish_reason": "stop"
+      }
+    }
+  },
+  "budget_256": [
+    {
+      "seconds": 9.64,
+      "completion_tokens": 151,
+      "reasoning_chars": 470,
+      "answer": "Paris",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "fact"
+    },
+    {
+      "seconds": 16.57,
+      "completion_tokens": 260,
+      "reasoning_chars": 669,
+      "answer": "3",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "count_letters"
+    },
+    {
+      "seconds": 16.97,
+      "completion_tokens": 262,
+      "reasoning_chars": 1032,
+      "answer": "3.5",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "memory_left"
+    },
+    {
+      "seconds": 16.95,
+      "completion_tokens": 262,
+      "reasoning_chars": 707,
+      "answer": "9.1",
+      "finish_reason": "stop",
+      "correct": false,
+      "case": "request_time"
+    },
+    {
+      "seconds": 16.82,
+      "completion_tokens": 260,
+      "reasoning_chars": 833,
+      "answer": "8",
+      "finish_reason": "stop",
+      "correct": false,
+      "case": "startup_chain"
+    },
+    {
+      "seconds": 15.77,
+      "completion_tokens": 245,
+      "reasoning_chars": 699,
+      "answer": "2",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "replicas"
+    },
+    {
+      "seconds": 17.02,
+      "completion_tokens": 261,
+      "reasoning_chars": 769,
+      "answer": "20",
+      "finish_reason": "stop",
+      "correct": false,
+      "case": "slots_queue"
+    },
+    {
+      "seconds": 18.45,
+      "completion_tokens": 285,
+      "reasoning_chars": 937,
+      "answer": "The container is consuming more memory than the 6Gi limit, causing the Linux kernel's OOM Killer to terminate the process.",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "triage_oom"
+    },
+    {
+      "seconds": 19.56,
+      "completion_tokens": 300,
+      "reasoning_chars": 784,
+      "answer": "The most likely cause is that the container image is configured to pull from a local registry address (127.0.0.1) that is not accessible from within the pod's network namespace.",
+      "finish_reason": "stop",
+      "correct": false,
+      "case": "triage_pull"
+    },
+    {
+      "seconds": 18.2,
+      "completion_tokens": 282,
+      "reasoning_chars": 1031,
+      "answer": "The operator should sign the image with the `platform-lab` cosign key before pushing it to the registry.",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "triage_policy"
+    }
+  ]
+}

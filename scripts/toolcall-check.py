@@ -8,10 +8,11 @@ and sends five OpenAI-style requests a Phase 3 agent would make:
   no_tool        tools offered but the question needs none; answers directly
   json_schema    response_format json_schema; output parses and matches
   tool_result    after a tool result, gives a final answer using it
-Temperature 0; thinking disabled where the template supports it (CPU latency).
-Results go to benchmarks/results/<label>/toolcall-<name>.json.
+Temperature 0; thinking disabled where the template supports it (CPU latency),
+or on with --thinking on (max_tokens 4096 then, so the answer is not cut off
+by the thinking). Results go to benchmarks/results/<label>/toolcall-<name>.json.
 
-Usage: scripts/toolcall-check.py --label host [name ...]
+Usage: scripts/toolcall-check.py --label host [--thinking on] [name ...]
 """
 
 import argparse
@@ -132,6 +133,7 @@ def wait_ready(proc, timeout=180):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--label", required=True)
+    ap.add_argument("--thinking", choices=["on", "off"], default="off")
     ap.add_argument("names", nargs="*")
     a = ap.parse_args()
     outdir = ROOT / "benchmarks/results" / a.label
@@ -153,26 +155,29 @@ def main():
             ready_s = wait_ready(proc)
             results = []
             for cname, body, check in CASES:
-                body = dict(body, temperature=0, max_tokens=512,
-                            chat_template_kwargs={"enable_thinking": False})
+                think = a.thinking == "on"
+                body = dict(body, temperature=0, max_tokens=4096 if think else 512,
+                            chat_template_kwargs={"enable_thinking": think})
                 t0 = time.monotonic()
                 try:
-                    msg = post("/v1/chat/completions", body)["choices"][0]["message"]
+                    resp = post("/v1/chat/completions", body)
+                    msg, tokens = resp["choices"][0]["message"], resp["usage"]["completion_tokens"]
                     err = None
                 except Exception as e:  # record server-side template/parse errors as failures
-                    msg, err = {}, str(e)
+                    msg, tokens, err = {}, None, str(e)
                 secs = round(time.monotonic() - t0, 2)
                 ok = bool(msg) and check(msg)
-                results.append(dict(case=cname, ok=ok, seconds=secs, error=err,
+                results.append(dict(case=cname, ok=ok, seconds=secs, error=err, completion_tokens=tokens,
+                                    reasoning_chars=len(msg.get("reasoning_content") or ""),
                                     content=msg.get("content"), tool_calls=msg.get("tool_calls")))
-                print(f"   {cname:12} {'PASS' if ok else 'FAIL'} {secs:6.1f}s", flush=True)
+                print(f"   {cname:12} {'PASS' if ok else 'FAIL'} {secs:6.1f}s {tokens} tokens", flush=True)
         finally:
             proc.terminate()
             proc.wait()
             log.close()
         score = sum(r["ok"] for r in results)
         (outdir / f"toolcall-{name}.json").write_text(json.dumps(
-            dict(model=name, server_ready_s=round(ready_s, 2), passed=score, total=len(results),
+            dict(model=name, thinking=a.thinking, server_ready_s=round(ready_s, 2), passed=score, total=len(results),
                  results=results), indent=2) + "\n")
         print(f"   {score}/{len(results)} passed", flush=True)
 

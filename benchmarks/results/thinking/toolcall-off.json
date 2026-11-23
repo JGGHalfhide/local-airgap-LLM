@@ -1,0 +1,77 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "thinking": "off",
+  "server_ready_s": 2.51,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case": "single_tool",
+      "ok": true,
+      "seconds": 5.1,
+      "error": null,
+      "completion_tokens": 43,
+      "reasoning_chars": 0,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_status",
+            "arguments": "{\"namespace\":\"llm\",\"pod\":\"inference-0\"}"
+          },
+          "id": "VT6VzxgjGulXnSSQwLv7lJIdyzygYFms"
+        }
+      ]
+    },
+    {
+      "case": "pick_tool",
+      "ok": true,
+      "seconds": 6.99,
+      "error": null,
+      "completion_tokens": 55,
+      "reasoning_chars": 0,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_logs",
+            "arguments": "{\"namespace\":\"web\",\"pod\":\"api-7f\",\"lines\":50}"
+          },
+          "id": "TUKj6m9S6mP6Sl6XIq8ksbii8WS8tiPH"
+        }
+      ]
+    },
+    {
+      "case": "no_tool",
+      "ok": true,
+      "seconds": 1.53,
+      "error": null,
+      "completion_tokens": 20,
+      "reasoning_chars": 0,
+      "content": "RKE2 is a lightweight, open-source Kubernetes distribution designed to simplify cluster management and deployment.",
+      "tool_calls": null
+    },
+    {
+      "case": "json_schema",
+      "ok": true,
+      "seconds": 3.49,
+      "error": null,
+      "completion_tokens": 44,
+      "reasoning_chars": 0,
+      "content": "{\n  \"severity\": \"critical\",\n  \"component\": \"etcd\",\n  \"summary\": \"No leader for 10 minutes on sole control-plane node causing API server failures\"\n}",
+      "tool_calls": null
+    },
+    {
+      "case": "tool_result",
+      "ok": true,
+      "seconds": 4.14,
+      "error": null,
+      "completion_tokens": 58,
+      "reasoning_chars": 0,
+      "content": "No, the pod `inference-0` in the `llm` namespace is not healthy. It is in a `CrashLoopBackOff` state, meaning it is restarting repeatedly and failing to start successfully. It has restarted 14 times and is not ready.",
+      "tool_calls": null
+    }
+  ]
+}

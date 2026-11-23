@@ -89,9 +89,18 @@ Goal: numbers and a repo a stranger can follow.
 
 Acceptance: a fresh clone of both repos reproduces the endpoint on both clusters.
 
+## v1.1: thinking default (11/23)
+
+Goal: the server's default matches what was measured and cannot hang a slot.
+
+- [x] Measure thinking on vs off, server-wide switches, budgets (11/23: `scripts/thinking-check.py`, `toolcall-check.py --thinking`; benchmarks/README.md. Thinking fixed 3/3 multi-step errors but looped to 8k tokens with no answer on 3/3 open-ended triage questions; budget 1024: 10/10 answered, 9/10 right.)
+- [x] ADR 0006: `--reasoning off --reasoning-budget 1024` in deploy/; smoke test checks no thinking by default; zarf/llm 0.6.0
+- [ ] Deployed and smoke-tested on the build cluster and the airgapped cluster
+- [ ] Tag v1.1
+
 ## Open questions
 
-- Qwen3.5 thinks before answering by default (134 completion tokens for a one-word answer in the smoke test). Turn thinking off per request (`chat_template_kwargs`) or server-wide for agent use? Measure the latency cost in Week 4/6.
+- ~~Qwen3.5 thinks before answering by default (134 completion tokens for a one-word answer in the smoke test). Turn thinking off per request (`chat_template_kwargs`) or server-wide for agent use? Measure the latency cost in Week 4/6.~~ Answered 11/23 (v1.1, ADR 0006): off server-wide, opt-in per request with a 1024-token budget. When agents should opt in is Phase 3's.
 
 - VM sizing: how much RAM can the airgap target get while the build VM runs? Do both need to run at once (only for packaging/transfer)?
 - ~~Image volumes vs init container for the model.~~ Answered 11/21 (ADR 0003): Kyverno 1.19 verifies image volumes only through a custom extractor; platform-lab's image policies now include them.

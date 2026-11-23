@@ -86,6 +86,7 @@ the full platform stack.
 | Energy per million output tokens | 0.75 kWh at 4 concurrent, 1.27 kWh one stream (CPU package, RAPL; a lower bound for the wall) | [load-test.md](docs/load-test.md#energy-per-million-tokens) |
 | Cold start, zero replicas to first byte | 6.2-6.4 s build cluster, 5.9-6.8 s airgapped | [scaling.md](docs/scaling.md), [airgap-runbook.md](docs/airgap-runbook.md) |
 | Airgapped deploy, egress blocked | 7m48s, 0 image pull errors, signed model verified at admission | [airgap-runbook.md](docs/airgap-runbook.md) |
+| Thinking (opt-in per request, budget 1024 tokens) | Fixed 3/3 multi-step errors at 10-68 s per answer; without a budget, open-ended questions looped for 10 min | [ADR 0006](docs/adr/0006-thinking-off-by-default.md) |
 | Model benchmark (host, llama-bench) | pp512 145 tokens/s, tg128 16.6 tokens/s at 8 threads | [benchmarks/README.md](benchmarks/README.md) |
 
 ## Quickstart
@@ -132,7 +133,10 @@ Airgapped cluster: [docs/airgap-runbook.md](docs/airgap-runbook.md)
 
 ## Decisions
 
-Architecture decision records are in [docs/adr/](docs/adr/).
+Architecture decision records are in [docs/adr/](docs/adr/): runtime
+(0001), model (0002), model as an OCI image volume (0003), plain Deployment
+over KServe (0004), scale to zero with KEDA (0005), thinking off by default
+(0006).
 
 ## License
 

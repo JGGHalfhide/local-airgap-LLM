@@ -10,6 +10,8 @@ scripts/fetch-models.sh                             # candidates.tsv -> models/,
 scripts/bench.py --label host                       # llama-bench: thread sweep + 4k-context pass
 scripts/toolcall-check.py --label host              # 5 tool-calling / JSON cases via llama-server
 scripts/server-mem.sh models/Qwen3.5-4B-Q4_K_M.gguf # llama-server peak memory by setting
+scripts/thinking-check.py                           # Qwen3.5 thinking: on/off, server flags, budget
+scripts/toolcall-check.py --label x --thinking on   # tool-call cases with thinking on
 ```
 
 Raw output: `results/<label>/` (llama-bench JSON with full metadata,
@@ -60,6 +62,37 @@ weights, so `--load-mode none` (v1.0's replacement for `--no-mmap`) saves
 about 1.2 GiB. Repacking costs about 0.3 GiB and is kept for speed.
 Qwen3.5 uses few full-attention layers, so 32k context adds only about
 0.7 GiB.
+
+## Thinking, Qwen3.5 4B Q4_K_M, 11/23
+
+`scripts/thinking-check.py`: host llama-server with the deployed flags,
+temperature 0, ten prompts with checkable answers (seven multi-step
+questions, three one-sentence incident triage questions), thinking on and
+off per request; then the server-wide switches and a thinking budget.
+Raw: [results/thinking/](results/thinking/). Decision:
+[ADR 0006](../docs/adr/0006-thinking-off-by-default.md).
+
+| Setting | Multi-step (7) | Triage (3) | Time per answer |
+|---|---|---|---|
+| Thinking off | 4 right | 2 right | 0.3-5 s |
+| Thinking on, no limit | 7 right (245-685 thinking tokens) | 0: all three looped to 8,192 tokens, no answer | 10-45 s; 10 min for the loops |
+| On, `--reasoning-budget 256` | 4 right | 2 right | 10-20 s |
+| On, `--reasoning off --reasoning-budget 1024`, opted in | 7 right | 2 right | 10-68 s |
+
+- Thinking fixed the three multi-step questions answered wrongly without it
+  (letters in "strawberry", 2 s + 128 tokens at 14 tok/s, 9 requests on 4
+  slots).
+- The triage loops: the model has its answer early, then rewords it
+  ("final decision… wait…"): one sentence repeated 8 times in 1,500 tokens.
+- A 256-token budget cuts reasoning mid-way: one answer thinking off had
+  right came out wrong (8 instead of 10).
+- `--reasoning off` and `--chat-template-kwargs '{"enable_thinking":false}'`
+  both stop thinking by default and both let a request opt in.
+- Tool calls (`toolcall-check.py --thinking on`): 5/5 either way, +80-120
+  tokens per call; the open-ended JSON triage case took 1,710 tokens
+  (111 s, 3.5 s off).
+- Caveats: ten prompts, one run each, greedy decoding (Qwen recommends
+  sampling in thinking mode), on the host with the airgap VM running.
 
 ## Findings
 

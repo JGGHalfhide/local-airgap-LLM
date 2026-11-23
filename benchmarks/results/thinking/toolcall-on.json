@@ -1,0 +1,77 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "thinking": "on",
+  "server_ready_s": 1.51,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case": "single_tool",
+      "ok": true,
+      "seconds": 10.15,
+      "error": null,
+      "completion_tokens": 123,
+      "reasoning_chars": 298,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_status",
+            "arguments": "{\"namespace\":\"llm\",\"pod\":\"inference-0\"}"
+          },
+          "id": "esgrhwTAOwWfygXL5o24XydeIw5rYcFZ"
+        }
+      ]
+    },
+    {
+      "case": "pick_tool",
+      "ok": true,
+      "seconds": 12.36,
+      "error": null,
+      "completion_tokens": 139,
+      "reasoning_chars": 300,
+      "content": "",
+      "tool_calls": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_pod_logs",
+            "arguments": "{\"namespace\":\"web\",\"pod\":\"api-7f\",\"lines\":50}"
+          },
+          "id": "swDAO2StsYhzuDXjFva2dnNEJDSoW0Rt"
+        }
+      ]
+    },
+    {
+      "case": "no_tool",
+      "ok": true,
+      "seconds": 9.04,
+      "error": null,
+      "completion_tokens": 138,
+      "reasoning_chars": 543,
+      "content": "RKE2 (Rancher Kubernetes Engine 2) is a lightweight, secure Kubernetes distribution designed to simplify deployment and management while maintaining full Kubernetes compatibility.",
+      "tool_calls": null
+    },
+    {
+      "case": "json_schema",
+      "ok": true,
+      "seconds": 111.11,
+      "error": null,
+      "completion_tokens": 1710,
+      "reasoning_chars": 6448,
+      "content": "{\n  \"severity\": \"critical\",\n  \"component\": \"etcd\",\n  \"summary\": \"etcd on the only control-plane node has had no leader for 10 minutes; the API server returns errors to every request.\"\n}",
+      "tool_calls": null
+    },
+    {
+      "case": "tool_result",
+      "ok": true,
+      "seconds": 9.95,
+      "error": null,
+      "completion_tokens": 144,
+      "reasoning_chars": 243,
+      "content": "No, the pod `inference-0` in the `llm` namespace is not healthy.\n\nIt is currently in a **CrashLoopBackOff** state, which means it is failing to start and restarting repeatedly. The pod has already restarted **14 times** and is not ready to serve traffic.\n\nYou may need to investigate the logs or configuration to determine why the pod is crashing.",
+      "tool_calls": null
+    }
+  ]
+}

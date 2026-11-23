@@ -1,0 +1,117 @@
+{
+  "model": "Qwen3.5-4B-Q4_K_M.gguf",
+  "flags": [
+    "--jinja",
+    "--load-mode",
+    "none",
+    "--cache-ram",
+    "0",
+    "--ctx-size",
+    "32768",
+    "--threads",
+    "6",
+    "--threads-batch",
+    "8"
+  ],
+  "per_request": [],
+  "server_off": {},
+  "budget_no_opt_in": {
+    "seconds": 0.32,
+    "completion_tokens": 2,
+    "reasoning_chars": 0,
+    "answer": "Paris",
+    "finish_reason": "stop"
+  },
+  "budget_1024": [
+    {
+      "seconds": 9.51,
+      "completion_tokens": 151,
+      "reasoning_chars": 470,
+      "answer": "Paris",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "fact"
+    },
+    {
+      "seconds": 17.51,
+      "completion_tokens": 274,
+      "reasoning_chars": 706,
+      "answer": "3",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "count_letters"
+    },
+    {
+      "seconds": 36.05,
+      "completion_tokens": 561,
+      "reasoning_chars": 1929,
+      "answer": "3.5",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "memory_left"
+    },
+    {
+      "seconds": 34.66,
+      "completion_tokens": 541,
+      "reasoning_chars": 1379,
+      "answer": "11.1",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "request_time"
+    },
+    {
+      "seconds": 33.49,
+      "completion_tokens": 520,
+      "reasoning_chars": 1566,
+      "answer": "10",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "startup_chain"
+    },
+    {
+      "seconds": 15.77,
+      "completion_tokens": 245,
+      "reasoning_chars": 699,
+      "answer": "2",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "replicas"
+    },
+    {
+      "seconds": 65.92,
+      "completion_tokens": 1024,
+      "reasoning_chars": 3076,
+      "answer": "60",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "slots_queue"
+    },
+    {
+      "seconds": 67.06,
+      "completion_tokens": 1044,
+      "reasoning_chars": 4250,
+      "answer": "The container is running out of memory because its usage exceeds the 6Gi limit.",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "triage_oom"
+    },
+    {
+      "seconds": 68.2,
+      "completion_tokens": 1060,
+      "reasoning_chars": 3806,
+      "answer": "The image reference is incorrect because it is pointing to the node's localhost (`127.0.0.1`) instead of the actual registry server address.",
+      "finish_reason": "stop",
+      "correct": false,
+      "case": "triage_pull"
+    },
+    {
+      "seconds": 67.37,
+      "completion_tokens": 1050,
+      "reasoning_chars": 4236,
+      "answer": "The operator should sign the image with the platform-lab cosign key and push the updated image to the registry.",
+      "finish_reason": "stop",
+      "correct": true,
+      "case": "triage_policy"
+    }
+  ]
+}

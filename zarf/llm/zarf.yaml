@@ -14,7 +14,7 @@ kind: ZarfPackageConfig
 metadata:
   name: llm
   description: llama-server with Qwen3.5 4B Q4_K_M, KEDA scaling, dashboard
-  version: 0.5.0
+  version: 0.6.0
   architecture: amd64
 
 components:

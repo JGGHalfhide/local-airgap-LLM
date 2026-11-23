@@ -13,7 +13,7 @@ cosign, monitoring, Velero, Zarf) come from
 describes them in full. This page lists them only for what they do for the
 inference workload.
 
-Current as of v1.0 (11/23): everything below is built, measured, and was
+Current as of v1.1 (11/23): everything below is built, measured, and was
 rebuilt from fresh clones of both repos
 ([scans/week6-rebuild.txt](scans/week6-rebuild.txt)).
 
@@ -40,6 +40,7 @@ rebuilt from fresh clones of both repos
 | `scripts/bench.py` | Python 3 | Thread sweep and 4k-context runs with `llama-bench`, results as JSON | Repeatable numbers per model ([benchmarks/README.md](../benchmarks/README.md)) |
 | `scripts/toolcall-check.py` | Python 3 | Five tool-calling and structured-output cases against `llama-server` | Phase 3 agents depend on tool calls, not only tokens/s |
 | `scripts/server-mem.sh` | | Peak server memory per setting (context size, mmap or not) | Sized the pod: `--load-mode none` saves 1.2 GiB |
+| `scripts/thinking-check.py` | Python 3 | Qwen3.5 thinking on vs off on ten checkable prompts, the server-wide switches, and a thinking budget | Set the server default ([ADR 0006](adr/0006-thinking-off-by-default.md)) |
 | `benchmarks/k8s/llama-bench-job.yaml` | | The same benchmark as a Job in the build VM | Measures VM and platform overhead; chose `-t 6 -tb 8` |
 
 Result: Qwen3.5 4B Q4_K_M, Apache-2.0
@@ -51,7 +52,7 @@ Q4_K_M.
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | llama.cpp `llama-server` | v1.0.0 (`ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d`, `sha256:e3032ea0…`) | OpenAI-compatible API (`/v1/chat/completions`), tool calls through the model's chat template (`--jinja`), JSON-schema output, Prometheus `/metrics` | CPU-first, reads GGUF from a path, runs as non-root, one image ([ADR 0001](adr/0001-llama-cpp-server-runtime.md)) |
-| Server settings | `--ctx-size 32768`, 4 slots sharing the KV cache, `--load-mode none`, `--cache-ram 0`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | Peak 5.0 GiB with 4 concurrent requests; 6 threads for generation, 8 for prompts (server timings: ~120 prompt tok/s at 800 tokens, 80 at 29.7k; ~14.5 generation tok/s) | Measured in Weeks 1, 3, 4 and 6 ([benchmarks/README.md](../benchmarks/README.md), [resource-plan.md](resource-plan.md)). `--cache-ram 0`: the default 8 GiB RAM prompt cache got the pod OOMKilled under load ([load-test.md](load-test.md#finding-oomkilled-under-load-fixed)) |
+| Server settings | `--ctx-size 32768`, 4 slots sharing the KV cache, `--load-mode none`, `--cache-ram 0`, `--reasoning off --reasoning-budget 1024`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | Peak 5.0 GiB with 4 concurrent requests; 6 threads for generation, 8 for prompts (server timings: ~120 prompt tok/s at 800 tokens, 80 at 29.7k; ~14.5 generation tok/s) | Measured in Weeks 1, 3, 4 and 6 ([benchmarks/README.md](../benchmarks/README.md), [resource-plan.md](resource-plan.md)). `--cache-ram 0`: the default 8 GiB RAM prompt cache got the pod OOMKilled under load ([load-test.md](load-test.md#finding-oomkilled-under-load-fixed)). Thinking off unless a request opts in, then at most 1024 tokens ([ADR 0006](adr/0006-thinking-off-by-default.md)) |
 | platform-lab `make image` | | Publishes the runtime image: crane pull, Syft SBOM, Trivy gate, push to Zot, cosign sign + SBOM attestation | The same path as every platform image |
 
 ### Model supply chain
