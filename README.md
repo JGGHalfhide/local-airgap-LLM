@@ -8,9 +8,10 @@ cluster with no internet.
 
 [![ci](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml/badge.svg)](https://github.com/JGGHalfhide/local-airgap-LLM/actions/workflows/ci.yml)
 
-**Status:** Week 6 of 6: endpoint on the build cluster and the airgapped VM,
-scale to zero (cold start ~6 s), load-tested (18 tokens/s at 4 concurrent
-requests, 0.75 kWh per million output tokens). Full rebuild and v1.0 next.
+**Status:** v1.0 (11/23): endpoint on the build cluster and the airgapped
+VM, scale to zero (cold start ~6 s), load-tested (18 tokens/s at 4
+concurrent requests, 0.75 kWh per million output tokens), and both clusters
+rebuilt from fresh clones ([scans/week6-rebuild.txt](docs/scans/week6-rebuild.txt)).
 See [ROADMAP.md](ROADMAP.md).
 
 ## Architecture
@@ -98,15 +99,27 @@ Application for this repo's `deploy/`.
 # In platform-lab: build cluster, Argo CD, and the images its manifests pin
 cd ../platform-lab
 make up
-make image IMAGE=ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d   # runtime
-# ...plus the platform's images (its README) and KEDA's six
-# (gitops/keda/kustomization.yaml)
+# The registry starts empty: publish every image the manifests pin, by
+# tag@digest (a tag alone can move upstream and miss the pinned digest).
+make image IMAGE=docker.io/stefanprodan/podinfo:6.17.0@sha256:fa2f27c1a8561097e5144bfc0853eba6054d743b68b03de4cad4675616ddefb0
+make image IMAGE=docker.io/library/postgres:17.12-alpine3.24@sha256:a77aa70e641402a21411b92b721c58d10f23b50ae5fdd2333efd22d166e1e5f7
+make image IMAGE=docker.io/velero/velero:v1.18.4@sha256:c89fb5b6d1fd6afd368e0f483e6f5555fd62851a1eada8ac5c72482e674ca17b
+make image IMAGE=ghcr.io/kedacore/keda:2.21.1@sha256:d09d92c0a310e3057a3c54df387b99abf2bf31352218dbe1adcb00e807886488
+make image IMAGE=ghcr.io/kedacore/keda-metrics-apiserver:2.21.1@sha256:747e376b3e80dc4f72bf4f7043f47cc4cdb56f34b1aed9531789f474996e1c84
+make image IMAGE=ghcr.io/kedacore/keda-admission-webhooks:2.21.1@sha256:5f4b0b0f7831b9f53738be85e99449a1747a5effa970305fe602455ab0f4fcd3
+make image IMAGE=ghcr.io/kedacore/http-add-on-operator:0.16.0@sha256:2ae0076d549fb7d12b3d9ecb1e87d035c7ee73e94a640ff53842e70ab0824da0
+make image IMAGE=ghcr.io/kedacore/http-add-on-interceptor:0.16.0@sha256:3a9a454b949edd5dee711ed14e603cc3b91b7c065905ecc251fe0a56a4c026f1
+make image IMAGE=ghcr.io/kedacore/http-add-on-scaler:0.16.0@sha256:db5223b1a37521ec0f099ac04785bfc069f5c3ebf4bacffd04e5127b0876dffb
+# This repo's runtime, and alpine for the smoke test's client pods
+make image IMAGE=ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
+make image IMAGE=docker.io/library/alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
 
 # Here: the model as a signed OCI image (downloads 2.8 GiB, checks SHA-256)
 cd ../local-airgap-LLM
 make model
 
-# Argo CD syncs deploy/ once the images are in Zot. Then:
+# Argo CD syncs deploy/ once the images are in Zot (pods that tried to pull
+# earlier retry within 5 minutes). Then:
 export KUBECONFIG=../platform-lab/kubeconfig
 make smoke                       # completion, NetworkPolicy, no egress, unsigned model rejected
 scripts/cold-start.sh 3          # scale from zero

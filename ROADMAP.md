@@ -84,8 +84,8 @@ Goal: numbers and a repo a stranger can follow.
 - [x] Cost per million tokens on this hardware (measured power draw x time); optional short rented-GPU comparison (user's call: off personal hardware) (11/23: RAPL CPU package energy, 0.75 kWh per million output tokens at 4 concurrent, 1.27 one stream; kWh only, no tariff; no wall meter, so a lower bound. GPU comparison skipped, user's call.)
 - [x] README: architecture (Mermaid), results table, quickstart (depends on platform-lab v1.0+) (11/23; quickstart to be checked by the full rebuild.)
 - [x] ADRs complete; gitleaks; employer check (11/23: ADRs 0001-0005 cover runtime, model, model packaging, serving layer, scaling; gitleaks in CI, 18 commits, no leaks; employer check: only lab names and public upstreams, signed off by the user.)
-- [ ] Full rebuild of both clusters from platform-lab + this repo; record times
-- [ ] Tag v1.0; post (user's)
+- [x] Full rebuild of both clusters from platform-lab + this repo; record times (11/23: make down, fresh clones of both repos, every step from the READMEs and runbook: build cluster 8m16s make up, 13/13 apps Healthy, smoke passed; model image rebuilt to the same digest; airgap VM: airgap-up 4m09s, airgap-deploy 7m53s, smoke 7/7, cold start 5.8-6.7 s, 0 pull errors. About 47 min of steps for both. Found and fixed: tag-only image publishing (postgres tag moved; quickstarts now tag@digest and complete), smoke exit code on the airgapped cluster (platform-lab lib.sh), runbook VM creation, smoke rerun race. docs/scans/week6-rebuild.txt.)
+- [x] Tag v1.0; post (user's) (v1.0 tagged 11/23; the post is the user's.)
 
 Acceptance: a fresh clone of both repos reproduces the endpoint on both clusters.
 

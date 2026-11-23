@@ -47,6 +47,9 @@ cleanup() {
   registry_env_cleanup
 }
 trap cleanup EXIT
+# A namespace left terminating by a previous run (cleanup does not wait)
+# would refuse the new pods.
+kubectl delete ns "$ns" --ignore-not-found --wait=true --timeout=3m >/dev/null
 
 echo "## setup"
 # pod <name> <client: true|false>: a restricted pod that only sleeps.

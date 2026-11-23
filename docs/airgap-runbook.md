@@ -66,6 +66,10 @@ virsh -c qemu:///system shutdown build-node-01
 virsh -c qemu:///system start airgap-rehearsal
 ```
 
+After a full teardown (`make down` in platform-lab) the airgap VM does not
+exist: create it with `(cd ../platform-lab && make rehearsal)` instead of
+`virsh start`.
+
 ### 3. RKE2, then block egress (platform-lab)
 
 ```bash

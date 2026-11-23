@@ -1,0 +1,66 @@
+# Week 6 full rebuild of both clusters, 11/23
+# make down (both VMs), then fresh clones of both repos from GitHub
+# (platform-lab 8a23657, local-airgap-LLM 8b8d645) side by side in a new
+# directory, and every step from the READMEs and docs/airgap-runbook.md there.
+# Logs: build/rebuild/ (gitignored). Times are wall clock on the build host.
+
+## Teardown
+make down (platform-lab)                     3 s     6 resources destroyed (both VMs)
+
+## Build cluster (build-node-01, 8 vCPU / 16 GiB)
+make up (platform-lab, fresh clone)          496 s   Ansible ok=159 changed=118 failed=0; node Ready
+make image x 11 (platform, KEDA, runtime,    269 s   all signed and attested; Trivy gate passed
+  alpine)
+  postgres republished by tag@digest         46 s    the tag had moved upstream (see below)
+make model (local-airgap-LLM)                234 s   digest sha256:fb1e513b... = the digest
+                                                     deploy/ pins: the model image build is
+                                                     reproducible
+Argo CD after the last image                 ~9 min  13/13 apps Synced, Healthy (pods that
+                                                     tried to pull before the push retried on
+                                                     their own, within the 5 min back-off)
+make smoke                                   46 s    ALL PASSED (completion, NetworkPolicy,
+                                                     no egress, unsigned model rejected)
+
+## Airgap packages (build host, build cluster running)
+make airgap-packages (platform-lab)          126 s   platform, policies, sample-app,
+                                                     monitoring, keda; signed
+make airgap-packages (local-airgap-LLM)      59 s    llm 3.7 GB, llm-smoke 3.1 GB; signed
+make airgap-stage (platform-lab, parallel)   71 s
+
+## Airgap cluster (airgap-rehearsal, 8 vCPU / 16 GiB, build VM shut down)
+virsh shutdown build-node-01                 12 s
+make rehearsal (creates the VM)              12 s
+make airgap-up                               249 s   Ansible failed=0; RKE2 Ready
+make airgap-disconnect                       3 s     curl rpm.rancher.io: No route to host
+make airgap-deploy (local-airgap-LLM)        473 s   8 packages, each verified against the
+                                                     lab key; failed=0
+make smoke                                   46 s    7/7 PASS ("Paris", 14.7 tok/s); exit
+                                                     code fixed, see below
+scripts/cold-start.sh 3                              first byte 6.31 / 6.65 / 5.84 s, pod
+                                                     ready +6 / +7 / +6 s, warm 0.2 s
+Image pull errors                                    0
+
+Total, both clusters from nothing: about 47 min of steps (plus the ~9 min
+Argo CD wait), not counting the cold-start runs.
+
+## Found and fixed
+1. Image tags move: the platform-lab quickstart published
+   postgres:17.12-alpine3.24 by tag; Docker Hub had rebuilt it, so the
+   pushed digest (f9cf3e1f...) was not the pinned one (a77aa70e...) and db-0
+   could not pull. Both READMEs now publish every image as tag@digest, and
+   list all of them (KEDA's six, the llama.cpp runtime and alpine were
+   missing).
+2. On the airgapped cluster make smoke printed ALL PASSED but exited 2:
+   platform-lab's registry_env_cleanup (`[[ -n "$x" ]] && rm ...`) returns
+   1 when registry_env never ran, and the EXIT trap made that the script's
+   status. Fixed in platform-lab scripts/lib.sh (if instead of &&),
+   platform-lab e57978f (with the README image list).
+3. The airgap runbook started the airgap VM with virsh; after a full
+   teardown it has to be created with make rehearsal. Runbook updated.
+4. make smoke run straight after a previous run failed: its namespace was
+   still terminating. smoke-test.sh now waits for it first.
+
+## After
+Terraform state, kubeconfigs, inventory and known_hosts copied back to the
+working platform-lab; terraform plan (Makefile's TF_VARs): only
+running false -> true on build-node-01 (shut down; one VM at a time).

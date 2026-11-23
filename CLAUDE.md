@@ -84,8 +84,8 @@ Standing preferences for the notes (user, 11/20):
   (short summary as the body, piped on stdin).
 
 ## Current status
-Public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Weeks 1-5 done,
-tagged v0.1-v0.5 (v0.5 on 11/22):
+Public repo github.com/JGGHalfhide/local-airgap-LLM (MIT). Weeks 1-6 done,
+tagged v0.1-v0.5 and v1.0 (11/23):
 - Weeks 1-2: model (ADR 0002) and runtime (ADR 0001) chosen by benchmark;
   model as a signed OCI image (ADR 0003, `make model`), VMs 8 vCPU / 16 GiB,
   run one at a time.
@@ -99,9 +99,14 @@ tagged v0.1-v0.5 (v0.5 on 11/22):
   Airgap VM: smoke 7/7, 0 pull errors, cold start 5.9-6.8 s
   (docs/airgap-runbook.md). Test scripts copy Zarf's private-registry Secret
   into their namespaces (scripts/zarf-pull-secret.sh).
-Next: Week 6 (load test, cost per million tokens, README results, full
-rebuild of both clusters, v1.0). Lab powered down; the airgap VM was left
-with egress blocked.
+- Week 6: load test (`make load-test`, docs/load-test.md): 18 tok/s at 4
+  concurrent, 14.3 one stream, TTFT 1.9 s, 0.75 kWh per million output
+  tokens (RAPL, lower bound). Found an OOMKill under load: `--cache-ram 0`.
+  Full rebuild of both clusters from fresh clones (docs/scans/week6-rebuild.txt);
+  quickstarts publish every image by tag@digest; platform-lab lib.sh exit
+  status fix.
+Next: Phase 3. The working platform-lab has the rebuilt clusters' state;
+airgap VM running with egress blocked, build VM off (one VM at a time).
 Long steps (package builds, airgap-up/deploy, cold start): run detached
 (setsid nohup, logs in build/); session cut-offs kill background jobs.
 Phase 3 (airgapped agents on Kubernetes) will be a separate repo.
