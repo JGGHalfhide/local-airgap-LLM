@@ -111,10 +111,9 @@ Goal: the server's default matches what was measured and cannot hang a slot.
 
 ## After this: Phase 3, agents on Kubernetes
 
-A separate repo and project, planned after v1.0: airgapped agents running in
-Kubernetes, using this repo's in-cluster endpoint. Agent workloads that call the in-cluster
-endpoint: per-agent identity (ServiceAccount, RBAC), tools behind
-NetworkPolicy and Kyverno, prompts and tool configs versioned through GitOps,
-every model and tool call traced. Candidate first agent: an incident triage
-agent with retrieval over platform-lab's runbooks and recovery docs, with a
-small evaluation set. Bigger VMs; no iMac.
+Continues in its own repo, local-agents (~/projects/local-agents, set up
+11/23; git repo created in its Week 1): airgapped agents in Kubernetes that
+call this repo's endpoint (`http://llm-api.llm.svc:8080`). Its ROADMAP.md
+has the plan, starting with an evaluation set of real Phase 1-2 incidents.
+Changes it needs here (endpoint access, flags, a second model) are made in
+this repo, with its conventions, and noted in both.
