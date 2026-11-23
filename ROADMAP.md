@@ -102,12 +102,12 @@ Goal: the server's default matches what was measured and cannot hang a slot.
 
 - ~~Qwen3.5 thinks before answering by default (134 completion tokens for a one-word answer in the smoke test). Turn thinking off per request (`chat_template_kwargs`) or server-wide for agent use? Measure the latency cost in Week 4/6.~~ Answered 11/23 (v1.1, ADR 0006): off server-wide, opt-in per request with a 1024-token budget. When agents should opt in is Phase 3's.
 
-- VM sizing: how much RAM can the airgap target get while the build VM runs? Do both need to run at once (only for packaging/transfer)?
+- ~~VM sizing: how much RAM can the airgap target get while the build VM runs? Do both need to run at once (only for packaging/transfer)?~~ Answered 11/22: both VMs 8 vCPU / 16 GiB, run one at a time; Zarf packages are built on the host while the build VM runs, then the VMs are switched (docs/resource-plan.md).
 - ~~Image volumes vs init container for the model.~~ Answered 11/21 (ADR 0003): Kyverno 1.19 verifies image volumes only through a custom extractor; platform-lab's image policies now include them.
-- One model or two (a small fast one plus a larger one) for comparison?
-- iGPU (Radeon 780M via Vulkan) as a stretch goal, or never?
-- Does the inference endpoint need auth (API key from Vault) even inside the cluster? (Phase 3 agents will be in-cluster clients, so decide with them in mind.)
-- Model choice should weigh tool calling / structured output and speed at long context, not just tokens/s on an empty prompt: Phase 3 agents depend on both.
+- One model or two (a small fast one plus a larger one) for comparison? Moved to Phase 3: one model (Qwen3.5 4B) for Phase 2; whether agents need a second model is for Phase 3's evaluation set.
+- iGPU (Radeon 780M via Vulkan) as a stretch goal, or never? Deferred: not done in Phase 2 (CPU-only, decided 11/20); revisit only if Phase 3 needs more speed.
+- Does the inference endpoint need auth (API key from Vault) even inside the cluster? (Phase 3 agents will be in-cluster clients, so decide with them in mind.) Moved to Phase 3, an early decision there; today access is limited by NetworkPolicy to labelled client pods through the interceptor. If an API key is added, it is a change to this repo's endpoint (like v1.1).
+- ~~Model choice should weigh tool calling / structured output and speed at long context, not just tokens/s on an empty prompt: Phase 3 agents depend on both.~~ Weighed in Week 1 (ADR 0002: tool-call checks 5/5, speed at 4k context), at long context on 11/22 (a 29,713-token prompt answered correctly, docs/resource-plan.md) and in v1.1 (tool calls with thinking on and off). Reasoning quality on real agent tasks is for Phase 3's evaluation set.
 
 ## After this: Phase 3, agents on Kubernetes
 
