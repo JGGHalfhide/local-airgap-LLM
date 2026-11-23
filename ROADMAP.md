@@ -67,12 +67,12 @@ Acceptance: dashboard with live data; measured cold start; scale to zero and bac
 
 Goal: the same thing on the disconnected VM.
 
-- [ ] Zarf package(s): runtime, model artifact (and its signatures), KEDA, manifests, dashboard
-- [ ] Package created and signed on the build host; deployed with egress blocked (platform-lab airgap flow)
-- [ ] Signatures verified via the Zarf registry; unsigned model rejected; 0 pull errors
-- [ ] Completion served on the airgapped cluster; dashboard with data
-- [ ] docs/airgap-runbook.md
-- [ ] Tag v0.5
+- [x] Zarf package(s): runtime, model artifact (and its signatures), KEDA, manifests, dashboard (11/22: zarf/llm + zarf/llm-smoke here, zarf/keda in platform-lab; .sig/.att listed explicitly.)
+- [x] Package created and signed on the build host; deployed with egress blocked (platform-lab airgap flow) (11/22: `make airgap-packages`, `make airgap-deploy` via platform-lab's script and zarf role; 7m48s.)
+- [x] Signatures verified via the Zarf registry; unsigned model rejected; 0 pull errors (11/22: needed a platform-lab fix, the airgap policy variant ignored image volumes.)
+- [x] Completion served on the airgapped cluster; dashboard with data (11/22: make smoke 7/7; cold start 5.9-6.8 s.)
+- [x] docs/airgap-runbook.md
+- [x] Tag v0.5
 
 Acceptance: completions on the airgapped VM with egress blocked, signed model verified, no pull errors.
 
