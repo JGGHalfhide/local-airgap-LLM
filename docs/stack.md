@@ -13,7 +13,9 @@ cosign, monitoring, Velero, Zarf) come from
 describes them in full. This page lists them only for what they do for the
 inference workload.
 
-Rows marked *planned* are on the [roadmap](../ROADMAP.md) and not built yet.
+Current as of v1.0 (11/23): everything below is built, measured, and was
+rebuilt from fresh clones of both repos
+([scans/week6-rebuild.txt](scans/week6-rebuild.txt)).
 
 ## Tech stack
 
@@ -22,8 +24,8 @@ Rows marked *planned* are on the [roadmap](../ROADMAP.md) and not built yet.
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | Build host | GMKtec K8 Plus, Ryzen 7 8845HS (8 cores / 16 threads, AVX-512), 32 GB (28.2 GiB usable), Arch Linux | Runs both VMs, the benchmarks, `make model` and the Zarf builds | Personal hardware; AVX-512 makes CPU inference practical |
-| build-node-01 | Rocky 9 VM, 8 vCPU / 12 GiB / 40 GiB | Connected build cluster: the model is published and served here first | Resized from 4 vCPU for inference ([resource-plan.md](resource-plan.md)) |
-| Airgap target | Rocky 9 VM (platform-lab `airgap_rehearsal`), 8 vCPU / 12 GiB / 60 GiB | Disconnected cluster for Week 5 | Replaces the 8 GB iMac, too small for the model next to the platform |
+| build-node-01 | Rocky 9 VM, 8 vCPU / 16 GiB / 40 GiB | Connected build cluster: the model is published and served here first; the Zarf packages are built from its registry | Resized from 4 vCPU / 12 GiB for inference ([resource-plan.md](resource-plan.md)) |
+| Airgap target | Rocky 9 VM (platform-lab `airgap_rehearsal`, 192.168.122.20), 8 vCPU / 16 GiB / 60 GiB | Disconnected cluster: egress blocked, everything arrives as signed Zarf packages | Replaces the 8 GB iMac, too small for the model next to the platform. The two VMs run one at a time (2 x 16 GiB does not fit in 28 GiB with the host) |
 | libvirt `host-passthrough` CPU | | The guests see the host's AVX-512 | llama.cpp picks the same `zen4` kernels in the VM as on the host |
 | Radeon 780M iGPU | | Not used | CPU-only decided 11/20; a stretch goal at most |
 
@@ -49,7 +51,7 @@ Q4_K_M.
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | llama.cpp `llama-server` | v1.0.0 (`ghcr.io/ggml-org/llama.cpp:server-v1.0.0-b12359-b1b770d`, `sha256:e3032ea0…`) | OpenAI-compatible API (`/v1/chat/completions`), tool calls through the model's chat template (`--jinja`), JSON-schema output, Prometheus `/metrics` | CPU-first, reads GGUF from a path, runs as non-root, one image ([ADR 0001](adr/0001-llama-cpp-server-runtime.md)) |
-| Server settings | `--ctx-size 32768`, 4 slots sharing the KV cache, `--load-mode none`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | Process peak 4.7 GiB at 32k; 6 threads for generation, 8 for prompts (server timings: ~120 prompt tok/s at 800 tokens, 80 at 29.7k; ~14.5 generation tok/s) | Measured in Weeks 1, 3 and 4 ([benchmarks/README.md](../benchmarks/README.md), [resource-plan.md](resource-plan.md)) |
+| Server settings | `--ctx-size 32768`, 4 slots sharing the KV cache, `--load-mode none`, `--cache-ram 0`, `--threads 6 --threads-batch 8`, `--metrics`, `--no-webui` | Peak 5.0 GiB with 4 concurrent requests; 6 threads for generation, 8 for prompts (server timings: ~120 prompt tok/s at 800 tokens, 80 at 29.7k; ~14.5 generation tok/s) | Measured in Weeks 1, 3, 4 and 6 ([benchmarks/README.md](../benchmarks/README.md), [resource-plan.md](resource-plan.md)). `--cache-ram 0`: the default 8 GiB RAM prompt cache got the pod OOMKilled under load ([load-test.md](load-test.md#finding-oomkilled-under-load-fixed)) |
 | platform-lab `make image` | | Publishes the runtime image: crane pull, Syft SBOM, Trivy gate, push to Zot, cosign sign + SBOM attestation | The same path as every platform image |
 
 ### Model supply chain
@@ -88,6 +90,17 @@ Q4_K_M.
 | ScaledObject `llama-server` | `deploy/llm/scaling.yaml` | 0-1 replicas, 5 min cooldown, `external-push` trigger from the add-on scaler | Frees 5-6 GiB when idle; one replica fits ([scaling.md](scaling.md)) |
 | Supply chain | `make image` (platform-lab) | All six images signed in Zot, pinned by digest; projected API tokens; the add-on's three under a scoped Trivy exception (CVE-2026-77524 in a library they link but do not call) | Same rules as every platform image |
 
+### Airgap
+
+| Component | Version | What it does here | Why |
+|---|---|---|---|
+| Zarf | v0.89.0 (platform-lab) | Packages images, their cosign signatures and attestations, and manifests into signed archives; on the node: `zarf init` (in-cluster registry, mutating agent), then `zarf package deploy --key cosign.pub --verify=always` | The platform-lab airgap path; a package with a bad or missing signature is not deployed |
+| `zarf/llm` | package 0.5.0, 3.7 GB | Runtime and model images (with `.sig` and `.att`, listed explicitly: Zarf does not pick up cosign's tag-based artifacts), the `deploy/` manifests, the dashboard | The same manifests and digests as the build cluster |
+| `zarf/llm-smoke` | package 0.5.0, 3.1 GB | The alpine client image and an unsigned copy of the model image, for `make smoke` | The smoke test cannot build the unsigned copy without the build registry |
+| platform-lab airgap flow | `make airgap-stage`, `airgap-up`, `airgap-disconnect`; this repo's `make airgap-packages`, `make airgap-deploy` | RKE2 from staged RPMs and images; firewalld policies block egress (checked: `curl` must fail); the zarf role deploys platform-lab's packages, then this repo's (`zarf_extra_packages`), skipping unchanged ones | Reused, not copied; idempotent (repeat run `changed=0`) |
+| Zarf registry and agent | `127.0.0.1:31999`, 20Gi PVC | The agent rewrites every image reference, image volumes included, to the Zarf registry; Kyverno's airgap policy variant verifies the rewritten references against the same key | One registry for the platform and the 2.8 GiB model |
+| `scripts/zarf-pull-secret.sh` | | Copies Zarf's `private-registry` pull Secret into namespaces created after deploy (smoke and cold-start test namespaces); no-op on the build cluster | Zarf creates the Secret only in namespaces that exist when it deploys |
+
 ### Admission
 
 | Component | Version | What it does here | Why |
@@ -100,9 +113,10 @@ Q4_K_M.
 
 | Component | Version | What it does here | Why |
 |---|---|---|---|
-| `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt)) |
+| `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected. Detects the airgapped cluster (its `zarf` namespace) and uses the Zarf registry and the llm-smoke package there | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt), [airgap-runbook.md](airgap-runbook.md)) |
 | `scripts/cold-start.sh` | | Waits for zero replicas, then times a streamed request from a client pod and reads the pod's timeline | Cold start from zero, client side ([scaling.md](scaling.md)) |
 | `make load-test` (`scripts/load-test.py`) | | Streamed requests at concurrency 1/2/4/8 through the interceptor: TTFT, p50/p95 latency, tokens/s, errors, and CPU package energy from RAPL | Throughput and energy per token, Python stdlib only ([load-test.md](load-test.md)) |
+| RAPL (Linux powercap) | `/sys/class/powercap/intel-rapl:0` | CPU package energy counter on the host, read with `sudo` before and after each load level | Measured energy per token without a wall meter; a lower bound (no DRAM, SSD or PSU losses) |
 | yamllint | 1.38.0 | `make lint`, CI | Same rules as platform-lab |
 | gitleaks | 8.30.1 | Full-history secret scan in CI | No secrets, kubeconfigs or weights committed |
 | GitHub Actions | `.github/workflows/ci.yml` | yamllint and gitleaks on every push and pull request | Checks without the lab |
@@ -114,13 +128,6 @@ Q4_K_M.
 | llama-server `/metrics` + ServiceMonitor | `deploy/llm/servicemonitor.yaml` | Prometheus scrapes token counters and timers, requests processing/deferred, busy slots every 15 s | Server-side throughput and load; no latency histograms exist, so TTFT and percentiles are client side ([observability.md](observability.md)) |
 | Grafana dashboard | `scripts/gen-dashboard.py` → `deploy/monitoring/dashboards/llama-server.json` | Status, throughput, load, memory and CPU, replicas and restarts | Dashboard as code, generated, in the `local-airgap-llm` folder |
 | Loki + Alloy | platform-lab | Server and KEDA logs; no prompt or response content (default verbosity, checked) | Prompts stay out of the log store by default ([observability.md](observability.md#logs)) |
-
-### Planned (Weeks 5-6)
-
-| Component | What it will do | Week |
-|---|---|---|
-| Zarf | Packages for the runtime, the model image and its signatures, KEDA, manifests and dashboard, signed on the host and deployed with egress blocked | 5 |
-| k6 or a small script | Load test at concurrency 1/2/4/8; cost per million tokens from measured power draw | 6 |
 
 ## Pipeline
 
@@ -177,11 +184,35 @@ Completion through `llm-api`, NetworkPolicy (unlabelled pod blocked, no
 bypass of the interceptor, no egress), and an unsigned copy of the model
 image rejected at admission (server-side dry run).
 
-### 7. Airgap (Week 5, planned)
+### 7. Airgap (Week 5)
 
-Zarf packages built on the host from the same digests, signatures
-included, carried to the airgap VM, deployed with `--verify=always`; the
-same manifests and `make smoke` on the disconnected cluster.
+1. On the build host, with the build cluster running: `make smoke` (makes
+   the unsigned model copy), platform-lab's `make airgap-packages`, then
+   this repo's `make airgap-packages`: images, signatures and attestations
+   pulled from Zot by digest, packages signed with the lab key and checked.
+2. Shut down the build VM; start (or, after a teardown, create with
+   `make rehearsal`) the airgap VM.
+3. platform-lab: `make airgap-stage` (once), `make airgap-up` (RKE2 from
+   staged artifacts), `make airgap-disconnect` (egress blocked, checked).
+4. `make airgap-deploy`: `zarf init`, then each package with
+   `--verify=always` against the lab key. Admission verifies the rewritten
+   references again.
+5. `make smoke` and `scripts/cold-start.sh` on the airgapped cluster.
+
+Step by step with results: [airgap-runbook.md](airgap-runbook.md).
+
+### 8. Measure (Week 6)
+
+`make load-test`: concurrency 1/2/4/8 through the interceptor, TTFT,
+p50/p95, tokens/s, errors, and energy per token from RAPL
+([load-test.md](load-test.md)).
+
+### 9. Rebuild from nothing (Week 6)
+
+`make down` in platform-lab, fresh clones of both repos, then the READMEs'
+quickstarts and the airgap runbook: about 47 minutes of steps for both
+clusters, the model image rebuilt to the same digest
+([scans/week6-rebuild.txt](scans/week6-rebuild.txt)).
 
 ## Data flow
 
@@ -226,7 +257,7 @@ flowchart TB
     bench["Benchmarks<br/>llama-bench, tool-call checks, memory"]
     model["make model<br/>fetch + SHA-256 → OCI image → push → cosign sign + SLSA provenance"]
     image["platform-lab make image<br/>SBOM → Trivy gate → push → cosign sign"]
-    zarf["Zarf packages (Week 5)"]
+    zarf["make airgap-packages<br/>Zarf packages, signed with the lab key"]
   end
 
   subgraph gh["GitHub"]
@@ -251,9 +282,10 @@ flowchart TB
     prom["Prometheus / Grafana / Loki"]
   end
 
-  subgraph ag["Airgap VM (egress blocked, Week 5)"]
+  subgraph ag["Airgap VM: egress blocked"]
+    zdep["zarf package deploy<br/>--verify=always"]
     zreg[("Zarf registry")]
-    pod2["llama-server + model"]
+    pod2["llama-server + model<br/>same manifests, admission, KEDA"]
   end
 
   hf --> bench
@@ -268,5 +300,5 @@ flowchart TB
   icp -. "requests in flight" .-> keda
   keda -. "scale 0 ↔ 1" .-> pod
   prom -.-> svc
-  zot --> zarf -- "signed packages" --> zreg --> pod2
+  zot --> zarf -- "signed packages" --> zdep --> zreg --> pod2
 ```
