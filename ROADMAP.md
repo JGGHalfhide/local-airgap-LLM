@@ -80,10 +80,10 @@ Acceptance: completions on the airgapped VM with egress blocked, signed model ve
 
 Goal: numbers and a repo a stranger can follow.
 
-- [ ] Load test (k6 or a small script): concurrency 1/2/4/8; tokens/s, TTFT, p50/p95, errors
-- [ ] Cost per million tokens on this hardware (measured power draw x time); optional short rented-GPU comparison (user's call: off personal hardware)
-- [ ] README: architecture (Mermaid), results table, quickstart (depends on platform-lab v1.0+)
-- [ ] ADRs complete; gitleaks; employer check
+- [x] Load test (k6 or a small script): concurrency 1/2/4/8; tokens/s, TTFT, p50/p95, errors (11/23: scripts/load-test.py, stdlib, through the interceptor. 18.2 tok/s at 4 concurrent, 14.3 one stream, TTFT 1.9 s; 0/64 errors. Found and fixed an OOMKill under load: RAM prompt cache, `--cache-ram 0`, c362a5a. docs/load-test.md.)
+- [x] Cost per million tokens on this hardware (measured power draw x time); optional short rented-GPU comparison (user's call: off personal hardware) (11/23: RAPL CPU package energy, 0.75 kWh per million output tokens at 4 concurrent, 1.27 one stream; kWh only, no tariff; no wall meter, so a lower bound. GPU comparison skipped, user's call.)
+- [x] README: architecture (Mermaid), results table, quickstart (depends on platform-lab v1.0+) (11/23; quickstart to be checked by the full rebuild.)
+- [x] ADRs complete; gitleaks; employer check (11/23: ADRs 0001-0005 cover runtime, model, model packaging, serving layer, scaling; gitleaks in CI, 18 commits, no leaks; employer check: only lab names and public upstreams, signed off by the user.)
 - [ ] Full rebuild of both clusters from platform-lab + this repo; record times
 - [ ] Tag v1.0; post (user's)
 

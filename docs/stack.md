@@ -102,6 +102,7 @@ Q4_K_M.
 |---|---|---|---|
 | `make smoke` (`scripts/smoke-test.sh`) | | Completion through `llm-api` (waking the server if needed); unlabelled pod blocked; no bypass of the interceptor; no egress from the server; unsigned model copy rejected | The acceptance test, rerunnable on either cluster ([scans/week3-smoke-test.txt](scans/week3-smoke-test.txt)) |
 | `scripts/cold-start.sh` | | Waits for zero replicas, then times a streamed request from a client pod and reads the pod's timeline | Cold start from zero, client side ([scaling.md](scaling.md)) |
+| `make load-test` (`scripts/load-test.py`) | | Streamed requests at concurrency 1/2/4/8 through the interceptor: TTFT, p50/p95 latency, tokens/s, errors, and CPU package energy from RAPL | Throughput and energy per token, Python stdlib only ([load-test.md](load-test.md)) |
 | yamllint | 1.38.0 | `make lint`, CI | Same rules as platform-lab |
 | gitleaks | 8.30.1 | Full-history secret scan in CI | No secrets, kubeconfigs or weights committed |
 | GitHub Actions | `.github/workflows/ci.yml` | yamllint and gitleaks on every push and pull request | Checks without the lab |

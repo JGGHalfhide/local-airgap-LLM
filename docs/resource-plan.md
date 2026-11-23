@@ -18,6 +18,11 @@ settings from ADR 0001):
 |---|---|
 | 8k context, 4 slots | 3.9 GiB |
 | 32k context, 4 slots (unified KV) | 4.6 GiB |
+| Same, 4 concurrent requests, `--cache-ram 0` (Week 6) | 5.0 GiB |
+
+The first two rows are after one request. Under concurrent load the RAM
+prompt cache (default 8 GiB) pushed the pod past its 6 GiB limit; it is
+off since Week 6 ([load-test.md](load-test.md)).
 
 Planned pod sizing: `-c 32768`, 4 slots sharing the KV cache, memory
 request 5 GiB, limit 6 GiB. CPU: generation speed is limited by memory

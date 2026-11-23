@@ -1,0 +1,24 @@
+# Week 6 load test, build cluster, 2026-11-23 11:35. Command:
+# KUBECONFIG=../platform-lab/kubeconfig scripts/load-test.py --rapl --idle 60 --out build/load-test-build.json
+# llama-server with --cache-ram 0 (c362a5a). Pod: 0 restarts during the run; cgroup anon 5036 MiB, file cache 677 MiB, peak 5983 MiB (limit 6144).
+warm-up (a cold start, if the server is at zero)...
+  8.9 s
+idle power, 60 s...
+  11.4 W
+concurrency 1: 16 requests...
+  {"concurrency": 1, "requests": 16, "errors": 0, "error_samples": [], "wall_s": 138.54, "output_tokens": 1550, "prompt_tokens_mean": 213, "aggregate_tps": 11.19, "per_request_gen_tps_mean": 14.25, "ttft_p50_s": 1.908, "ttft_p95_s": 2.106, "latency_p50_s": 8.0, "latency_p95_s": 10.92, "cpu_package_joules": 7103.4, "cpu_package_watts_mean": 51.3, "joules_per_output_token": 4.583}
+concurrency 2: 16 requests...
+  {"concurrency": 2, "requests": 16, "errors": 0, "error_samples": [], "wall_s": 115.06, "output_tokens": 1461, "prompt_tokens_mean": 213, "aggregate_tps": 12.7, "per_request_gen_tps_mean": 8.1, "ttft_p50_s": 2.331, "ttft_p95_s": 4.014, "latency_p50_s": 13.33, "latency_p95_s": 20.57, "cpu_package_joules": 5730.9, "cpu_package_watts_mean": 49.8, "joules_per_output_token": 3.923}
+concurrency 4: 16 requests...
+  {"concurrency": 4, "requests": 16, "errors": 0, "error_samples": [], "wall_s": 87.01, "output_tokens": 1581, "prompt_tokens_mean": 213, "aggregate_tps": 18.17, "per_request_gen_tps_mean": 5.97, "ttft_p50_s": 2.61, "ttft_p95_s": 7.954, "latency_p50_s": 20.52, "latency_p95_s": 29.96, "cpu_package_joules": 4257.8, "cpu_package_watts_mean": 48.9, "joules_per_output_token": 2.693}
+concurrency 8: 16 requests...
+  {"concurrency": 8, "requests": 16, "errors": 0, "error_samples": [], "wall_s": 85.54, "output_tokens": 1595, "prompt_tokens_mean": 213, "aggregate_tps": 18.65, "per_request_gen_tps_mean": 6.0, "ttft_p50_s": 21.98, "ttft_p95_s": 32.44, "latency_p50_s": 36.14, "latency_p95_s": 56.19, "cpu_package_joules": 4169.4, "cpu_package_watts_mean": 48.7, "joules_per_output_token": 2.614}
+
+| Concurrency | Requests | Errors | Output tok/s (all) | Gen tok/s per request | TTFT p50 | TTFT p95 | Latency p50 | Latency p95 | CPU W | J/token |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 16 | 0 | 11.19 | 14.25 | 1.908 s | 2.106 s | 8.0 s | 10.92 s | 51.3 | 4.583 |
+| 2 | 16 | 0 | 12.7 | 8.1 | 2.331 s | 4.014 s | 13.33 s | 20.57 s | 49.8 | 3.923 |
+| 4 | 16 | 0 | 18.17 | 5.97 | 2.61 s | 7.954 s | 20.52 s | 29.96 s | 48.9 | 2.693 |
+| 8 | 16 | 0 | 18.65 | 6.0 | 21.98 s | 32.44 s | 36.14 s | 56.19 s | 48.7 | 2.614 |
+
+written to build/load-test-build.json

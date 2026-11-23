@@ -1,7 +1,7 @@
 # Model chosen in ADR 0002; any row of benchmarks/candidates.tsv works.
 MODEL ?= qwen3.5-4b-q4km
 
-.PHONY: model smoke dashboard lint airgap-packages airgap-deploy
+.PHONY: model smoke load-test dashboard lint airgap-packages airgap-deploy
 
 PLATFORM_LAB ?= $(abspath ../platform-lab)
 AIRGAP_OUT := $(CURDIR)/build/airgap/packages
@@ -17,6 +17,11 @@ model:
 # NetworkPolicy, no egress, unsigned model rejected. Needs KUBECONFIG.
 smoke:
 	./scripts/smoke-test.sh
+
+# Load test at concurrency 1/2/4/8 with CPU package energy (RAPL, sudo)
+# (scripts/load-test.py, docs/load-test.md). Needs KUBECONFIG.
+load-test:
+	./scripts/load-test.py --rapl --idle 60 --out build/load-test.json
 
 # Regenerate the Grafana dashboard JSON (deploy/monitoring/dashboards/).
 dashboard:
