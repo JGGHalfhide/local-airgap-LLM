@@ -107,7 +107,9 @@ spec:
               cpu: "4"
               memory: 5Gi
             limits:
-              memory: 6Gi
+              # Measurement 11/24 (local-agents agent-tool-loop OOM): 7.5 GiB
+              # with 4 slots, replay of scripts/agent-mem-replay.py. Not final.
+              memory: 7680Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
