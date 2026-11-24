@@ -24,8 +24,8 @@ rebuilt from fresh clones of both repos
 | Component | Version | What it does here | Why |
 |---|---|---|---|
 | Build host | GMKtec K8 Plus, Ryzen 7 8845HS (8 cores / 16 threads, AVX-512), 32 GB (28.2 GiB usable), Arch Linux | Runs both VMs, the benchmarks, `make model` and the Zarf builds | Personal hardware; AVX-512 makes CPU inference practical |
-| build-node-01 | Rocky 9 VM, 8 vCPU / 16 GiB / 40 GiB | Connected build cluster: the model is published and served here first; the Zarf packages are built from its registry | Resized from 4 vCPU / 12 GiB for inference ([resource-plan.md](resource-plan.md)) |
-| Airgap target | Rocky 9 VM (platform-lab `airgap_rehearsal`, 192.168.122.20), 8 vCPU / 16 GiB / 60 GiB | Disconnected cluster: egress blocked, everything arrives as signed Zarf packages | Replaces the 8 GB iMac, too small for the model next to the platform. The two VMs run one at a time (2 x 16 GiB does not fit in 28 GiB with the host) |
+| build-node-01 | Rocky 9 VM, 8 vCPU / 16 GiB / 40 GiB in Phase 2; 12 vCPU / 20 GiB since 11/23 (local-agents docs/resource-plan.md) | Connected build cluster: the model is published and served here first; the Zarf packages are built from its registry | Resized from 4 vCPU / 12 GiB for inference ([resource-plan.md](resource-plan.md)) |
+| Airgap target | Rocky 9 VM (platform-lab `airgap_rehearsal`, 192.168.122.20), 8 vCPU / 16 GiB / 60 GiB in Phase 2; 12 vCPU / 20 GiB since 11/23 | Disconnected cluster: egress blocked, everything arrives as signed Zarf packages | Replaces the 8 GB iMac, too small for the model next to the platform. The two VMs run one at a time (2 x 16 GiB, now 2 x 20 GiB, does not fit in 28 GiB with the host) |
 | libvirt `host-passthrough` CPU | | The guests see the host's AVX-512 | llama.cpp picks the same `zen4` kernels in the VM as on the host |
 | Radeon 780M iGPU | | Not used | CPU-only decided 11/20; a stretch goal at most |
 

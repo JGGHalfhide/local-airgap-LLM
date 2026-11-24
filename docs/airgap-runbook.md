@@ -1,15 +1,16 @@
 # Airgap runbook
 
 How the inference endpoint gets onto the disconnected cluster
-(`airgap-rehearsal`, 192.168.122.20: a second VM on the build host, 8 vCPU /
-16 GiB / 60 GiB, Rocky Linux 9, single-node RKE2). It reuses platform-lab's
+(`airgap-rehearsal`, 192.168.122.20: a second VM on the build host, 12 vCPU /
+20 GiB / 60 GiB since 11/23 for local-agents (8 vCPU / 16 GiB in Phase 2),
+Rocky Linux 9, single-node RKE2). It reuses platform-lab's
 airgap flow ([platform-lab docs/airgap-runbook.md](https://github.com/JGGHalfhide/platform-lab/blob/main/docs/airgap-runbook.md)):
 everything is built and signed on the connected build host, copied over, and
 installed with the node's egress blocked. Zarf is the deploy tool there; Argo
 CD does not run on the airgapped cluster.
 
-The two VMs do not run at the same time (16 GiB each on ~28 GiB usable;
-docs/resource-plan.md): packages are built while build-node-01 runs, then it
+The two VMs do not run at the same time (20 GiB each on ~28 GiB usable;
+docs/resource-plan.md and local-agents docs/resource-plan.md): packages are built while build-node-01 runs, then it
 is shut down and the airgap VM started.
 
 ## What goes over

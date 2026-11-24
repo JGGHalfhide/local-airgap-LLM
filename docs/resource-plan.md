@@ -97,3 +97,11 @@ and the pod to the planned 32k context (c75b12e):
 - A memory change applies in place but needs a power cycle
   (`virsh shutdown` + `virsh start`); a reboot inside the guest keeps the
   old size.
+
+## Phase 3 (11/23)
+
+Both VMs went to 12 vCPU / 20 GiB for the agents that run next to the
+inference pod (local-agents docs/resource-plan.md, with measurements). The
+inference pod's settings (requests 4 CPU / 5 GiB, limit 6 GiB, `-t 6 -tb 8`)
+are unchanged; the results above were measured at 8 vCPU / 16 GiB. Still
+one VM at a time.
