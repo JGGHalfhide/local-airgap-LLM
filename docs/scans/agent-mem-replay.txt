@@ -1,0 +1,60 @@
+# Inference pod memory under agent tool loops, build cluster, 2026-11-24
+# Method: scripts/agent-mem-replay.py replays recorded chat requests through the
+#   KEDA interceptor (kubectl port-forward, Host: llm-api.llm.svc), sequentially,
+#   from a fresh process (waits for zero replicas, cold start on request 0), and
+#   samples the pod cgroup on the node every 2 s over ssh (memory.current, peak,
+#   memory.stat anon/file, memory.events oom_kill). No exec, no cluster change.
+# Requests: agent-requests.json = the 27 chat requests of local-agents' ADR 0002
+#   smoke test (5 runtimes x 1 run of the status reporter's tool loop, 981-7,301
+#   prompt tokens, temperature 0, thinking off, max_tokens 512); in E2 every
+#   request carries id_slot 0. long-context-requests.json = two one-shot prompts
+#   of 14,970 tokens built from the same tool output.
+# Server: llama.cpp b12359-b1b770d90, Qwen3.5 4B Q4_K_M, --ctx-size 32768,
+#   --cache-ram 0, -t 6 -tb 8; per-run flag changes in the table, applied by
+#   commits to deploy/llm/llama-server.yaml (5c830e8, 2c6b46e, ae8a650).
+# Raw data: agent-mem-replay/<run>-{requests,samples}.jsonl, <run>-server.log.
+
+| Run | Setting | Limit | Requests | Non-200 | OOM kills | Max anon MiB | Max cgroup MiB | Total s |
+|---|---|---|---|---|---|---|---|---|
+| E1-spread | 4 slots (auto, unified 32k), default 32 checkpoints/slot | 6 GiB | 27 | 2 | 2 | 6037 | 6143 | 722 |
+| E2-slot0 | same, every request id_slot 0 | 6 GiB | 27 | 0 | 0 | 5787 | 6143 | 775 |
+| E3-limit7.5-spread | 4 slots, 32 checkpoints | 7.5 GiB | 27 | 0 | 0 | 6791 | 7048 | 721 |
+| E4-2slots-6g | --parallel 2 (kv_unified off, 16k per slot) | 6 GiB | 27 | 0 | 0 | 5877 | 5890 | 720 |
+| E5-2slots-2x15k | --parallel 2; two ~15k-token one-shot prompts, slot 0 and 1 | 6 GiB | 2 | 0 | 0 | 4745 | 4756 | 316 |
+| E6-ckpt4-spread | 4 slots (auto, unified 32k), --ctx-checkpoints 4 | 6 GiB | 27 | 0 | 0 | 5286 | 5298 | 726 |
+
+## Anonymous memory (MiB) after each request (agent sequence)
+
+| # | Runtime (run) | Prompt tokens | E1-spread | E2-slot0 | E3-limit7.5-spread | E4-2slots-6g | E6-ckpt4-spread |
+|---|---|---|---|---|---|---|---|
+| 0 | plain-stdlib | 981 | 4777 | 4783 | 4777 | 4675 | 4779 |
+| 1 | plain-stdlib | 5357 | 4933 | 4938 | 4932 | 4831 | 4784 |
+| 2 | plain-stdlib | 5930 | 4983 | 5039 | 4983 | 4881 | 4784 |
+| 3 | plain-stdlib | 6011 | 5084 | 5089 | 5083 | 4982 | 4784 |
+| 4 | plain-stdlib | 5738 | 5324 | 4874 | 5324 | 5221 | 4924 |
+| 5 | plain-openai | 981 | 5023 | 4824 | 5022 | 4919 | 5024 |
+| 6 | plain-openai | 5357 | 5123 | 4924 | 5123 | 5070 | 5024 |
+| 7 | plain-openai | 5930 | 5274 | 5025 | 5274 | 5121 | 5024 |
+| 8 | plain-openai | 6011 | 5324 | 5125 | 5324 | 5221 | 5024 |
+| 9 | plain-openai | 5738 | 5325 | 4673 | 5324 | 5221 | 4924 |
+| 10 | pydantic-ai | 1291 | 5526 | 4877 | 5525 | 4920 | 5075 |
+| 11 | pydantic-ai | 1403 | 5576 | 4930 | 5575 | 4970 | 5075 |
+| 12 | pydantic-ai | 5679 | 5676 | 5031 | 5726 | 5070 | 5075 |
+| 13 | pydantic-ai | 6484 | 5785 | 5131 | 5784 | 5171 | 5083 |
+| 14 | pydantic-ai | 7253 | 5886 | 5234 | 5887 | 5274 | 5085 |
+| 15 | langgraph | 1028 | 6037 | 4882 | 6088 | 5223 | 5235 |
+| 16 | langgraph | - | killed | 4932 | 6138 | 4771 | 5235 |
+| 17 | smolagents | - | killed | 4832 | 5837 | 4922 | 5235 |
+| 18 | smolagents | 2352 | 4780 | 4832 | 5837 | 4972 | 5185 |
+| 19 | smolagents | 2526 | 4881 | 4932 | 5937 | 5022 | 5185 |
+| 20 | smolagents | 2620 | 4981 | 5033 | 6038 | 5123 | 5286 |
+| 21 | smolagents | 4186 | 5134 | 5184 | 6188 | 5274 | 5286 |
+| 22 | smolagents | 5815 | 5329 | 5385 | 6389 | 5424 | 5235 |
+| 23 | smolagents | 5898 | 5386 | 5435 | 6440 | 5525 | 5286 |
+| 24 | smolagents | 7071 | 5538 | 5586 | 6590 | 5676 | 5185 |
+| 25 | smolagents | 7159 | 5638 | 5687 | 6691 | 5776 | 5185 |
+| 26 | smolagents | 7301 | 5739 | 5787 | 6791 | 5877 | 5286 |
+
+E1 after the OOM kill (request 16) continues on a restarted process; its later
+values are not comparable. E5 (one-shot prompts): 4,641 MiB after 14,970 tokens
+on slot 0, 4,745 MiB after 14,970 more on slot 1.

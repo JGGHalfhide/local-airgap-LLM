@@ -25,12 +25,13 @@ platform-lab provides the clusters; this repo provides the workload.
 - Build host: GMKtec K8 Plus (Ryzen 7 8845HS, 8 cores / 16 threads, 32 GB RAM,
   ~28 GiB usable), Arch Linux, libvirt/QEMU/KVM at qemu:///system.
   Radeon 780M iGPU: not used (CPU-only decided 11/20; stretch goal at most).
-- Build cluster VM: build-node-01, 192.168.122.10, 4 vCPU / 12 GiB today
-  (platform-lab terraform vars vcpus, memory_mib).
+- Build cluster VM: build-node-01, 192.168.122.10, 12 vCPU / 20 GiB since
+  11/23 (platform-lab terraform vars vcpus, memory_mib; local-agents
+  docs/resource-plan.md).
 - Airgap target: a SECOND VM on the same host (decided 11/20), replacing the
-  iMac. Based on platform-lab's airgap_rehearsal module (192.168.122.20, today
-  4 vCPU / 8 GiB via rehearsal_vcpus / rehearsal_memory_mib): needs resizing.
-  Both VMs at once must fit in ~28 GiB with headroom for the host.
+  iMac: platform-lab's airgap_rehearsal module (192.168.122.20), 12 vCPU /
+  20 GiB since 11/23 (rehearsal_vcpus / rehearsal_memory_mib). The two VMs
+  run one at a time (2 x 20 GiB does not fit in ~28 GiB).
 - The iMac (airgap-node-01) is retired for this project.
 
 ## Decisions so far (11/20-11/21)
@@ -42,6 +43,10 @@ platform-lab provides the clusters; this repo provides the workload.
 - Thinking (11/23, ADR 0006): off server-wide (--reasoning off), opt-in per
   request with chat_template_kwargs, --reasoning-budget 1024. When agents
   opt in is a Phase 3 question.
+- Context checkpoints (11/24, ADR 0007): --ctx-checkpoints 4. The default
+  32 per slot grew 50-250 MiB per agent tool-loop turn and got the pod
+  OOMKilled at 6 GiB (found by local-agents); with 4, 5.3 GiB flat.
+  Replay: scripts/agent-mem-replay.py, docs/scans/agent-mem-replay.txt.
 - Airgap target: second VM, not the iMac.
 - Separate repo from platform-lab.
 
@@ -120,4 +125,7 @@ platform-lab holds both clusters' Terraform state and kubeconfigs.
 Long steps (package builds, airgap-up/deploy, cold start): run detached
 (setsid nohup, logs in build/); session cut-offs kill background jobs.
 Phase 3 (airgapped agents on Kubernetes) will be a separate repo.
+11/24 (Phase 3 support): agent tool loops OOMKilled the pod; fixed with
+--ctx-checkpoints 4 (ADR 0007), measured on the build cluster only; the
+airgapped cluster gets it with the next `make airgap-packages`.
 See ROADMAP.md for the checklist.

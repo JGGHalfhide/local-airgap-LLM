@@ -50,9 +50,10 @@ spec:
             # request can use all of it (docs/resource-plan.md).
             - --ctx-size
             - "32768"
-            # Measurement 11/24 (local-agents agent-tool-loop OOM): at most 4
-            # context checkpoints per slot (default 32), 4 slots, 6 GiB limit,
-            # replay of scripts/agent-mem-replay.py. Not final.
+            # At most 4 context checkpoints per slot (default 32). Each turn of
+            # an agent's tool loop saved one more: memory grew 50-250 MiB per
+            # turn and the pod was OOMKilled at 6 GiB. With 4: flat at 5.3 GiB,
+            # same latency (ADR 0007, docs/scans/agent-mem-replay.txt).
             - --ctx-checkpoints
             - "4"
             # No RAM prompt cache. It saves the state of every prompt that

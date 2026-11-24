@@ -85,6 +85,7 @@ the full platform stack.
 | Throughput, 4 concurrent requests (the server's 4 slots) | 18.2 tokens/s; TTFT 2.6 s p50 / 8.0 s p95; latency 20.5 s p50 / 30.0 s p95 (128 tokens) | [load-test.md](docs/load-test.md) |
 | 8 concurrent requests | 18.7 tokens/s; requests queue, TTFT 22 s p50 | [load-test.md](docs/load-test.md) |
 | Errors under load | 0 of 64 (after fixing an OOM the load test found) | [load-test.md](docs/load-test.md#finding-oomkilled-under-load-fixed) |
+| Agent tool loops (27 multi-turn requests, 1k-7k tokens) | Peak 5.3 GiB, 0 errors with `--ctx-checkpoints 4`; OOMKilled at 6 GiB with the default | [ADR 0007](docs/adr/0007-context-checkpoints-capped-at-4.md), [scan](docs/scans/agent-mem-replay.txt) |
 | Energy per million output tokens | 0.75 kWh at 4 concurrent, 1.27 kWh one stream (CPU package, RAPL; a lower bound for the wall) | [load-test.md](docs/load-test.md#energy-per-million-tokens) |
 | Cold start, zero replicas to first byte | 6.2-6.4 s build cluster, 5.9-6.8 s airgapped | [scaling.md](docs/scaling.md), [airgap-runbook.md](docs/airgap-runbook.md) |
 | Airgapped deploy, egress blocked | 7m48s, 0 image pull errors, signed model verified at admission | [airgap-runbook.md](docs/airgap-runbook.md) |
@@ -138,7 +139,7 @@ Airgapped cluster: [docs/airgap-runbook.md](docs/airgap-runbook.md)
 Architecture decision records are in [docs/adr/](docs/adr/): runtime
 (0001), model (0002), model as an OCI image volume (0003), plain Deployment
 over KServe (0004), scale to zero with KEDA (0005), thinking off by default
-(0006).
+(0006), context checkpoints capped at 4 (0007).
 
 ## License
 

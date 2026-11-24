@@ -111,9 +111,30 @@ still reuses its own KV prefix when the next prompt in it shares one
 conversation from RAM. Phase 3 agents with a long shared system prompt may
 want a small cache back, with the limit raised to match.
 
+## Finding: OOMKilled under agent tool loops (fixed, ADR 0007)
+
+The first agent workload from local-agents (11/24: tool loops, many turns
+per conversation, 1k-7k-token prompts, one request at a time) got the pod
+`OOMKilled` at 6 GiB with `--cache-ram 0` already set. Replaying its 27
+requests with the pod's cgroup sampled every 2 s
+([scans/agent-mem-replay.txt](scans/agent-mem-replay.txt)): anonymous
+memory grew 50-250 MiB with every turn that extended a cached
+conversation, to 6037 MiB and a restart at request 16. Two one-shot
+15k-token prompts cost about 100 MiB, so it followed turns, not tokens.
+A 7.5 GiB limit or 2 slots only delayed it.
+
+Cause: llama-server keeps up to 32 context checkpoints per slot by default
+(`--ctx-checkpoints`), state for resuming a conversation of a hybrid model
+like Qwen3.5; each turn added one. Fix (ADR 0007): `--ctx-checkpoints 4`.
+Same replay: no restart, flat at 5185-5286 MiB from request 16, total time
+726 s vs 722 s.
+
 ## Not measured
 
 - The airgapped cluster under load (same VM size and images, measured
   only with single requests: [airgap-runbook.md](airgap-runbook.md)).
-- Long prompts (only 213 tokens here) and long generations.
+- Long prompts under concurrent load (213 tokens here; agent tool loops
+  up to 7.3k and one-shot 15k-token prompts were replayed one at a time:
+  [scans/agent-mem-replay.txt](scans/agent-mem-replay.txt)) and long
+  generations.
 - Wall power.

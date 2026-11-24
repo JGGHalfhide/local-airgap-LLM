@@ -1,0 +1,27 @@
+{"i": 0, "run": "plain-stdlib/healthy/0", "t_end": 1795537817.350639, "status": 200, "seconds": 19.3, "prompt_tokens": 981, "completion_tokens": 75, "cached_tokens": 0, "error": null}
+{"i": 1, "run": "plain-stdlib/healthy/0", "t_end": 1795537884.4430346, "status": 200, "seconds": 67.09, "prompt_tokens": 5357, "completion_tokens": 349, "cached_tokens": 1055, "error": null}
+{"i": 2, "run": "plain-stdlib/healthy/0", "t_end": 1795537891.2951922, "status": 200, "seconds": 6.85, "prompt_tokens": 5930, "completion_tokens": 52, "cached_tokens": 5705, "error": null}
+{"i": 3, "run": "plain-stdlib/healthy/0", "t_end": 1795537928.9589193, "status": 200, "seconds": 37.66, "prompt_tokens": 6011, "completion_tokens": 434, "cached_tokens": 5981, "error": null}
+{"i": 4, "run": "plain-stdlib/healthy/0", "t_end": 1795538018.3042068, "status": 200, "seconds": 89.34, "prompt_tokens": 5738, "completion_tokens": 448, "cached_tokens": 0, "error": null}
+{"i": 5, "run": "plain-openai/healthy/0", "t_end": 1795538023.4536915, "status": 200, "seconds": 5.15, "prompt_tokens": 981, "completion_tokens": 75, "cached_tokens": 977, "error": null}
+{"i": 6, "run": "plain-openai/healthy/0", "t_end": 1795538091.6620986, "status": 200, "seconds": 68.21, "prompt_tokens": 5357, "completion_tokens": 349, "cached_tokens": 1055, "error": null}
+{"i": 7, "run": "plain-openai/healthy/0", "t_end": 1795538098.5404403, "status": 200, "seconds": 6.88, "prompt_tokens": 5930, "completion_tokens": 52, "cached_tokens": 5705, "error": null}
+{"i": 8, "run": "plain-openai/healthy/0", "t_end": 1795538135.8673856, "status": 200, "seconds": 37.33, "prompt_tokens": 6011, "completion_tokens": 434, "cached_tokens": 5981, "error": null}
+{"i": 9, "run": "plain-openai/healthy/0", "t_end": 1795538173.5953577, "status": 200, "seconds": 37.73, "prompt_tokens": 5738, "completion_tokens": 448, "cached_tokens": 5734, "error": null}
+{"i": 10, "run": "pydantic-ai/healthy/0", "t_end": 1795538185.8152385, "status": 200, "seconds": 12.22, "prompt_tokens": 1291, "completion_tokens": 15, "cached_tokens": 0, "error": null}
+{"i": 11, "run": "pydantic-ai/healthy/0", "t_end": 1795538191.017131, "status": 200, "seconds": 5.2, "prompt_tokens": 1403, "completion_tokens": 60, "cached_tokens": 1305, "error": null}
+{"i": 12, "run": "pydantic-ai/healthy/0", "t_end": 1795538273.0668437, "status": 200, "seconds": 82.05, "prompt_tokens": 5679, "completion_tokens": 512, "cached_tokens": 1462, "error": null}
+{"i": 13, "run": "pydantic-ai/healthy/0", "t_end": 1795538320.8459675, "status": 200, "seconds": 47.78, "prompt_tokens": 6484, "completion_tokens": 512, "cached_tokens": 6190, "error": null}
+{"i": 14, "run": "pydantic-ai/healthy/0", "t_end": 1795538374.923566, "status": 200, "seconds": 54.08, "prompt_tokens": 7253, "completion_tokens": 512, "cached_tokens": 6480, "error": null}
+{"i": 15, "run": "langgraph/healthy/0", "t_end": 1795538384.913421, "status": 200, "seconds": 9.99, "prompt_tokens": 1028, "completion_tokens": 15, "cached_tokens": 0, "error": null}
+{"i": 16, "run": "langgraph/healthy/0", "t_end": 1795538386.1977746, "status": 502, "seconds": 1.28, "prompt_tokens": null, "completion_tokens": null, "cached_tokens": null, "error": "Bad Gateway\n"}
+{"i": 17, "run": "smolagents/healthy/0", "t_end": 1795538386.652638, "status": 503, "seconds": 0.45, "prompt_tokens": null, "completion_tokens": null, "cached_tokens": null, "error": "{\"error\":{\"message\":\"Loading model\",\"type\":\"unavailable_error\",\"code\":503}}"}
+{"i": 18, "run": "smolagents/healthy/0", "t_end": 1795538416.4484863, "status": 200, "seconds": 29.8, "prompt_tokens": 2352, "completion_tokens": 40, "cached_tokens": 0, "error": null}
+{"i": 19, "run": "smolagents/healthy/0", "t_end": 1795538420.7887692, "status": 200, "seconds": 4.34, "prompt_tokens": 2526, "completion_tokens": 38, "cached_tokens": 2348, "error": null}
+{"i": 20, "run": "smolagents/healthy/0", "t_end": 1795538422.9757273, "status": 200, "seconds": 2.19, "prompt_tokens": 2620, "completion_tokens": 15, "cached_tokens": 2522, "error": null}
+{"i": 21, "run": "smolagents/healthy/0", "t_end": 1795538442.371655, "status": 200, "seconds": 19.4, "prompt_tokens": 4186, "completion_tokens": 63, "cached_tokens": 2616, "error": null}
+{"i": 22, "run": "smolagents/healthy/0", "t_end": 1795538460.460234, "status": 200, "seconds": 18.09, "prompt_tokens": 5815, "completion_tokens": 27, "cached_tokens": 4182, "error": null}
+{"i": 23, "run": "smolagents/healthy/0", "t_end": 1795538463.7512777, "status": 200, "seconds": 3.29, "prompt_tokens": 5898, "completion_tokens": 14, "cached_tokens": 5811, "error": null}
+{"i": 24, "run": "smolagents/healthy/0", "t_end": 1795538479.2961454, "status": 200, "seconds": 15.54, "prompt_tokens": 7071, "completion_tokens": 32, "cached_tokens": 5894, "error": null}
+{"i": 25, "run": "smolagents/healthy/0", "t_end": 1795538483.3660676, "status": 200, "seconds": 4.07, "prompt_tokens": 7159, "completion_tokens": 16, "cached_tokens": 7067, "error": null}
+{"i": 26, "run": "smolagents/healthy/0", "t_end": 1795538520.3130255, "status": 200, "seconds": 36.95, "prompt_tokens": 7301, "completion_tokens": 384, "cached_tokens": 7155, "error": null}

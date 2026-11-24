@@ -19,10 +19,13 @@ settings from ADR 0001):
 | 8k context, 4 slots | 3.9 GiB |
 | 32k context, 4 slots (unified KV) | 4.6 GiB |
 | Same, 4 concurrent requests, `--cache-ram 0` (Week 6) | 5.0 GiB |
+| Agent tool loops (27 requests, 1k-7k tokens, all 4 slots used), `--ctx-checkpoints 4` (11/24) | 5.3 GiB (6.0 GiB and OOMKilled with the default 32) |
 
 The first two rows are after one request. Under concurrent load the RAM
 prompt cache (default 8 GiB) pushed the pod past its 6 GiB limit; it is
-off since Week 6 ([load-test.md](load-test.md)).
+off since Week 6 ([load-test.md](load-test.md)). Under agent tool loops
+context checkpoints did the same; capped at 4 per slot since 11/24
+([ADR 0007](adr/0007-context-checkpoints-capped-at-4.md)).
 
 Planned pod sizing: `-c 32768`, 4 slots sharing the KV cache, memory
 request 5 GiB, limit 6 GiB. CPU: generation speed is limited by memory
