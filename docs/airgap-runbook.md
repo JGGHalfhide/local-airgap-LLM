@@ -10,8 +10,10 @@ installed with the node's egress blocked. Zarf is the deploy tool there; Argo
 CD does not run on the airgapped cluster.
 
 The two VMs do not run at the same time (20 GiB each on ~28 GiB usable;
-docs/resource-plan.md and local-agents docs/resource-plan.md): packages are built while build-node-01 runs, then it
-is shut down and the airgap VM started.
+docs/resource-plan.md and local-agents docs/resource-plan.md): packages are
+built while build-node-01 runs, then the VMs are switched in platform-lab
+with `make vm-stop VM=build-node-01 && make vm-start VM=airgap-rehearsal`
+(it refuses to start one VM while the other runs).
 
 ## What goes over
 
