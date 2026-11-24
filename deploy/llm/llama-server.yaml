@@ -50,6 +50,10 @@ spec:
             # request can use all of it (docs/resource-plan.md).
             - --ctx-size
             - "32768"
+            # Measurement 11/24 (local-agents agent-tool-loop OOM): 2 slots
+            # at the 6 GiB limit, replay of scripts/agent-mem-replay.py. Not final.
+            - --parallel
+            - "2"
             # No RAM prompt cache. It saves the state of every prompt that
             # leaves a slot, up to 8 GiB by default: under load (4 slots,
             # unique prompts) the pod passed its 6 GiB limit and was
@@ -107,9 +111,7 @@ spec:
               cpu: "4"
               memory: 5Gi
             limits:
-              # Measurement 11/24 (local-agents agent-tool-loop OOM): 7.5 GiB
-              # with 4 slots, replay of scripts/agent-mem-replay.py. Not final.
-              memory: 7680Mi
+              memory: 6Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
