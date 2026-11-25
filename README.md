@@ -94,6 +94,10 @@ the full platform stack.
 
 ## Quickstart
 
+From an empty machine, all three repos in order (platform-lab, this repo,
+local-agents):
+[build guide](https://github.com/JGGHalfhide/platform-lab/blob/main/docs/build-guide.md).
+
 Needs [platform-lab](https://github.com/JGGHalfhide/platform-lab) v1.0+
 cloned next to this repo (`../platform-lab`), its prerequisites and Vault,
 and its build cluster up. Platform-lab's root Argo CD app includes an
