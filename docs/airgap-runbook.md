@@ -148,3 +148,14 @@ Found during the run and fixed:
   A `make inventory` rebuild starts from an empty file and does not hit this.
 - The `llm-smoke` package carries the model's layers again (packages do not
   share blobs); the Zarf registry stores them once.
+
+### llm 0.7.0 for local-agents (11/25)
+
+llm 0.6.0 had been built on 11/23, before `--ctx-checkpoints 4` (ADR 0007)
+and thinking off by default (ADR 0006); an agent tool loop would have
+OOMKilled the endpoint on the airgapped cluster. Rebuilt from deploy/ as
+0.7.0 and deployed with local-agents' status reporter (its
+`make airgap-deploy` passes llm and llm-smoke from this repo's
+build/airgap/packages). The local-agents eval on the airgapped cluster
+ran 13 status runs of 6-8 tool calls each against it with no endpoint
+error. Results: local-agents `docs/airgap-runbook.md`.
